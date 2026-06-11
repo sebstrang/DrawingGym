@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Drawing Gym</title>
+<style>
+  /* ---------- Design tokens ----------
+     Concept: a fineliner sketchbook. Drawabox demands ink (no erasing) —
+     so the palette is ink-on-newsprint: warm paper, near-black ink,
+     a single vermilion accent used the way you'd use a red pen to
+     mark "done". Type: a condensed grotesque for headers (drafting-label
+     feel) + a humanist serif for reading + monospace for data/streak. */
+  :root {
+    --paper:      #ECE7DA;
+    --paper-2:    #E3DCCB;
+    --ink:        #1B1A17;
+    --ink-soft:   #4A463C;
+    --ink-faint:  #908A78;
+    --rule:       #C9C1AE;
+    --vermilion:  #C8402B;
+    --vermilion-d:#A53120;
+    --done:       #2E7D52;
+    --shadow:     rgba(27,26,23,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 31px, rgba(27,26,23,0.035) 31px 32px);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", "Georgia", serif;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 0 16px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  /* ---------- Masthead ---------- */
+  header {
+    padding: 38px 0 18px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 26px;
+    position: relative;
+  }
+  .eyebrow {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 700;
+  }
+  h1 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 800;
+    font-size: clamp(34px, 9vw, 58px);
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin: 6px 0 4px;
+    font-stretch: condensed;
+  }
+  h1 .ink-drop { color: var(--vermilion); }
+  .tagline {
+    font-size: 15px;
+    color: var(--ink-soft);
+    font-style: italic;
+    max-width: 46ch;
+  }
+
+  /* ---------- Stat strip ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin-bottom: 28px;
+  }
+  .stat {
+    background: var(--paper-2);
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .stat .num {
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .stat .num.fire { color: var(--vermilion); }
+  .stat .lbl {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-top: 6px;
+    font-weight: 700;
+  }
+
+  /* ---------- Phase banner ---------- */
+  .phase-banner {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+  .phase-banner .wk { color: var(--ink-faint); }
+
+  /* ---------- Daily card ---------- */
+  .card {
+    background: #F3EFE4;
+    border: 1.5px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--shadow);
+    padding: 26px 24px 24px;
+    position: relative;
+  }
+  .card .sess-no {
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+  .card h2 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 800;
+    font-size: clamp(22px, 5.5vw, 30px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 4px 0 8px;
+  }
+  .focus {
+    display: inline-block;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--vermilion-d);
+    border: 1px solid var(--vermilion);
+    border-radius: 2px;
+    padding: 3px 8px;
+    margin-bottom: 16px;
+  }
+  .card .blurb {
+    font-size: 15.5px;
+    color: var(--ink-soft);
+    margin-bottom: 22px;
+  }
+
+  /* ---------- Checklist ---------- */
+  .tasks { list-style: none; }
+  .task {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 13px 0;
+    border-top: 1px solid var(--rule);
+    cursor: pointer;
+    user-select: none;
+  }
+  .task:last-child { border-bottom: 1px solid var(--rule); }
+  .box {
+    flex: 0 0 24px;
+    width: 24px; height: 24px;
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .12s ease;
+    background: transparent;
+  }
+  .box svg { width: 15px; height: 15px; opacity: 0; transform: scale(.5); transition: all .15s ease; }
+  .task.checked .box { background: var(--vermilion); border-color: var(--vermilion); }
+  .task.checked .box svg { opacity: 1; transform: scale(1); }
+  .task .t-body { flex: 1; }
+  .task .t-title {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+  .task .t-meta { font-size: 13.5px; color: var(--ink-soft); margin-top: 2px; }
+  .task.checked .t-title,
+  .task.checked .t-meta { color: var(--ink-faint); text-decoration: line-through; }
+  .task a {
+    color: var(--vermilion-d);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .task a:hover { color: var(--vermilion); }
+
+  .tag {
+    display: inline-block;
+    font-family: "SF Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 2px;
+    margin-left: 6px;
+    vertical-align: 1px;
+  }
+  .tag.warmup { background: #DfE8E0; color: #2E7D52; }
+  .tag.main   { background: #F0DDD8; color: var(--vermilion-d); }
+  .tag.watch  { background: #E4DECB; color: var(--ink-soft); }
+
+  /* ---------- Done state ---------- */
+  .done-stamp {
+    margin-top: 22px;
+    text-align: center;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--done);
+    border: 2px dashed var(--done);
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 14px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity .3s ease, max-height .3s ease, padding .3s ease;
+    padding-top: 0; padding-bottom: 0;
+  }
+  .done-stamp.show { opacity: 1; max-height: 120px; padding: 12px; }
+  .done-stamp small { display:block; font-family: var(--serif); font-weight:400; font-style:italic; letter-spacing:0; text-transform:none; color: var(--ink-soft); font-size:13px; margin-top:6px; }
+
+  /* ---------- Controls ---------- */
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 26px;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    padding: 11px 16px;
+    border-radius: 3px;
+    transition: all .12s ease;
+  }
+  button:hover { background: var(--ink); color: var(--paper); }
+  button.primary { background: var(--vermilion); border-color: var(--vermilion); color: #fff; }
+  button.primary:hover { background: var(--vermilion-d); border-color: var(--vermilion-d); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button:disabled:hover { background: var(--paper); color: var(--ink); }
+  button:focus-visible { outline: 3px solid var(--vermilion); outline-offset: 2px; }
+
+  /* ---------- Curriculum map ---------- */
+  .map { margin-top: 42px; }
+  .map h3 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 700;
+    border-bottom: 1px solid var(--rule); padding-bottom: 8px; margin-bottom: 14px;
+  }
+  .stage-block { padding: 10px 0; border-bottom: 1px solid var(--rule); }
+  .stage-block:last-child { border-bottom: none; }
+  .stage-row { display: flex; gap: 12px; align-items: baseline; }
+  .stage-row .sno { font-family:"SF Mono",monospace; color: var(--vermilion); font-weight:700; flex:0 0 64px; font-size:13px; }
+  .stage-row .sname { font-family:"Helvetica Neue",Arial,sans-serif; font-weight:700; flex:1; font-size:15px; }
+  .stage-row .swk { font-family:"SF Mono",monospace; font-size:11px; color: var(--ink-faint); }
+  .stage-block .ssub { font-size:12.5px; color: var(--ink-faint); font-style:italic; margin:2px 0 0 76px; }
+  .stage-block.future { opacity:.45; }
+  .stage-block.past .sname { color: var(--ink-soft); }
+  .stage-block.active .sname { color: var(--vermilion-d); }
+  .phase-sub { margin:10px 0 4px 76px; padding-left:12px; border-left:2px solid var(--rule); }
+  .mini-phase { font-family:"Helvetica Neue",Arial,sans-serif; font-size:12.5px; color: var(--ink-soft); padding:4px 0; display:flex; gap:8px; align-items:baseline; }
+  .mini-phase .mini-no { font-family:"SF Mono",monospace; font-size:10px; color:var(--ink-faint); flex:0 0 18px; }
+  .mini-phase .mini-wk { margin-left:auto; font-family:"SF Mono",monospace; font-size:10px; color:var(--ink-faint); }
+  .mini-phase.pactive { color: var(--vermilion-d); font-weight:700; }
+  .mini-phase.pactive .mini-no { color: var(--vermilion); }
+  .mini-phase.pdone { color: var(--ink-faint); }
+  .mini-phase.pdone::before { content:"✓ "; color: var(--done); }
+
+  footer {
+    margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
+    font-size: 12px; color: var(--ink-faint); font-style: italic;
+  }
+  .reset-link {
+    background:none; border:none; padding:0; color:var(--ink-faint);
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:11px; letter-spacing:0.05em;
+    text-transform:uppercase; text-decoration:underline; cursor:pointer; font-weight:700;
+  }
+  .reset-link:hover { background:none; color: var(--vermilion); }
+
+  .sync { margin-top: 40px; }
+  .sync-intro { font-size: 14px; color: var(--ink-soft); margin-bottom: 14px; max-width: 60ch; }
+  .sync-controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  #syncBox {
+    width:100%; min-height:64px; resize:vertical;
+    font-family:"SF Mono","Consolas",monospace; font-size:12px;
+    background: var(--paper-2); border:1.5px solid var(--rule); border-radius:3px;
+    padding:10px 12px; color: var(--ink-soft); line-height:1.4;
+  }
+  #syncBox:focus { outline:2px solid var(--vermilion); outline-offset:1px; border-color: var(--vermilion); }
+  .sync-msg { font-size:13px; margin-top:8px; min-height:18px; font-weight:700;
+    font-family:"Helvetica Neue",Arial,sans-serif; letter-spacing:0.02em; }
+  .sync-msg.ok { color: var(--done); }
+  .sync-msg.err { color: var(--vermilion-d); }
+
+  .cloud-status {
+    display:flex; flex-direction:column; gap:2px;
+    border:1.5px solid var(--rule); border-left-width:4px; border-radius:3px;
+    padding:10px 14px; margin-bottom:14px; background: var(--paper-2);
+  }
+  .cloud-status .cs-label {
+    font-family:"Helvetica Neue",Arial,sans-serif; font-weight:800; font-size:13px;
+    letter-spacing:0.04em; text-transform:uppercase;
+  }
+  .cloud-status .cs-note { font-size:12.5px; color: var(--ink-soft); }
+  .cloud-status.cs-on    { border-left-color: var(--done); }
+  .cloud-status.cs-on .cs-label { color: var(--done); }
+  .cloud-status.cs-connecting { border-left-color: var(--ink-faint); }
+  .cloud-status.cs-error { border-left-color: var(--vermilion); }
+  .cloud-status.cs-error .cs-label { color: var(--vermilion-d); }
+  .cloud-status.cs-off, .cloud-status.cs-needs-id { border-left-color: var(--rule); }
+  .cloud-status.cs-off .cs-label, .cloud-status.cs-needs-id .cs-label { color: var(--ink-faint); }
+
+  #syncIdInput {
+    flex:1; min-width:200px;
+    font-family:"SF Mono","Consolas",monospace; font-size:13px;
+    background: var(--paper); border:1.5px solid var(--ink); border-radius:3px;
+    padding:10px 12px; color: var(--ink);
+  }
+  #syncIdInput:focus { outline:2px solid var(--vermilion); outline-offset:1px; }
+
+  .backup-fold { margin-top:18px; border-top:1px solid var(--rule); padding-top:12px; }
+  .backup-fold summary {
+    cursor:pointer; font-family:"Helvetica Neue",Arial,sans-serif; font-weight:700;
+    font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color: var(--ink-faint);
+    list-style:none;
+  }
+  .backup-fold summary::-webkit-details-marker { display:none; }
+  .backup-fold summary::before { content:"+ "; color: var(--vermilion); }
+  .backup-fold[open] summary::before { content:"– "; }
+  .backup-fold summary:hover { color: var(--vermilion); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Daily practice &middot; Drawabox + Proko</div>
+    <h1>The Drawing<br>Gym<span class="ink-drop">.</span></h1>
+    <p class="tagline">One session a day. No grinding, no chasing pretty pictures &mdash; just the reps that build a real eye and a confident hand.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="num fire" id="streak">0</div><div class="lbl">Day streak</div></div>
+    <div class="stat"><div class="num" id="completed">0</div><div class="lbl">Sessions done</div></div>
+    <div class="stat"><div class="num" id="progress">0%</div><div class="lbl">Course done</div></div>
+  </div>
+
+  <div class="phase-banner">
+    <span id="phaseLabel">Phase 1 &middot; Mechanics &amp; Confidence</span>
+    <span class="wk" id="weekLabel">Week 1</span>
+  </div>
+
+  <div class="card" id="card">
+    <!-- filled by JS -->
+  </div>
+
+  <div class="controls">
+    <button class="primary" id="completeBtn">Mark session complete</button>
+    <button id="skipBtn">Did this already &rsaquo;</button>
+    <button id="backBtn">&lsaquo; Previous</button>
+  </div>
+
+  <div class="map">
+    <h3>The 48-week arc · 4 stages</h3>
+    <div id="phaseMap"></div>
+  </div>
+
+  <div class="map sync" id="syncSection">
+    <h3>Sync across devices</h3>
+
+    <div class="cloud-status cs-off" id="cloudStatus">
+      <span class="cs-label">Local only</span>
+      <span class="cs-note">Cloud sync isn't set up yet.</span>
+    </div>
+
+    <p class="sync-intro" id="cloudIntro">
+      Once your Firebase config is added (see the setup notes that came with this file), pick any <strong>Sync ID</strong> — a word or phrase only you know — and enter the same one on every device. Your progress then updates everywhere automatically, no copying needed.
+    </p>
+    <div class="sync-controls">
+      <input type="text" id="syncIdInput" placeholder="Your Sync ID (e.g. andrew-drawing-2026)" spellcheck="false" autocomplete="off">
+      <button class="primary" id="syncConnectBtn">Connect this device</button>
+      <button id="syncDisconnectBtn" style="display:none">Disconnect</button>
+    </div>
+
+    <details class="backup-fold">
+      <summary>Or move progress manually with a backup code</summary>
+      <p class="sync-intro">Works with no setup at all. Copy the code on one device, paste &amp; restore on another.</p>
+      <div class="sync-controls">
+        <button id="backupBtn">Copy my backup code</button>
+        <button id="restoreBtn">Paste a code to restore</button>
+      </div>
+      <textarea id="syncBox" placeholder="Your backup code will appear here. Or paste a code from another device and tap Restore." spellcheck="false"></textarea>
+      <div class="sync-msg" id="syncMsg"></div>
+    </details>
+  </div>
+
+  <footer>
+    Built around free resources: <strong>Drawabox</strong> (drawabox.com) for spatial reasoning &amp; ink mark-making, <strong>Proko</strong> (proko.com / YouTube) for figure, portrait, form &amp; shading, and <strong>Ctrl+Paint</strong> (ctrlpaint.com) for digital. A 48-week course in four stages. Tools: a fineliner pen + cheap paper to start; a tablet from Stage 2.
+    <br><br>
+    <button class="reset-link" id="resetBtn">Reset all progress</button>
+  </footer>
+</div>
+
+<script>
+// ============================================================
+//  CURRICULUM  — 72 sessions, 6 days/week × 12 weeks
+//  Each session: { focus, title, blurb, tasks[] }
+//  task: { tag:'warmup'|'main'|'watch', title, meta }
+// ============================================================
+
+// 16 phases, grouped into 4 twelve-week stages.
+const PHASES = [
+  { no:1,  name:"Mechanics & Confidence",      weeks:"Wk 1–3"   },
+  { no:2,  name:"Boxes & the Spatial Core",    weeks:"Wk 4–6"   },
+  { no:3,  name:"Form, Observation & Shading", weeks:"Wk 7–9"   },
+  { no:4,  name:"Construction & Applying It",  weeks:"Wk 10–12" },
+  { no:5,  name:"Gesture",                     weeks:"Wk 13–15" },
+  { no:6,  name:"Structure & Proportion",      weeks:"Wk 16–18" },
+  { no:7,  name:"The Head & Portrait",         weeks:"Wk 19–21" },
+  { no:8,  name:"Synthesis",                   weeks:"Wk 22–24" },
+  { no:9,  name:"Perspective",                 weeks:"Wk 25–27" },
+  { no:10, name:"Anatomy Building Blocks",     weeks:"Wk 28–30" },
+  { no:11, name:"Light & Value Mastery",       weeks:"Wk 31–33" },
+  { no:12, name:"Integration",                 weeks:"Wk 34–36" },
+  { no:13, name:"Composition",                 weeks:"Wk 37–39" },
+  { no:14, name:"From Imagination",            weeks:"Wk 40–42" },
+  { no:15, name:"Personal Projects",           weeks:"Wk 43–45" },
+  { no:16, name:"Mastery & Momentum",          weeks:"Wk 46–48" },
+];
+
+// Four 12-week stages for the high-level map.
+const STAGES = [
+  { no:1, name:"Foundations",        weeks:"Weeks 1–12",  sub:"Confidence, lines, form, construction" },
+  { no:2, name:"Drawing Real Things",weeks:"Weeks 13–24", sub:"Figure, portrait, going digital" },
+  { no:3, name:"Depth & Control",    weeks:"Weeks 25–36", sub:"Perspective, anatomy, light" },
+  { no:4, name:"Bringing It Together",weeks:"Weeks 37–48", sub:"Composition, imagination, projects" },
+];
+
+// reusable warm-up task
+const W = (txt) => ({ tag:'warmup', title:'Warm-up (3–5 min)', meta: txt });
+
+// Helper to make Drawabox / Proko link tasks
+const dbox = (lesson, label, meta) => ({ tag:'main', title:label, meta:`${meta} <a href="https://drawabox.com/lesson/${lesson}" target="_blank" rel="noopener">open lesson →</a>` });
+const proko = (label, meta) => ({ tag:'watch', title:label, meta:`${meta} <a href="https://www.proko.com/course/drawing-basics" target="_blank" rel="noopener">open Proko →</a>` });
+
+const CURRICULUM = [];
+
+// ---------- PHASE 1 : Weeks 1–3 (sessions 1–18) ----------
+CURRICULUM.push(
+ {focus:"Read & set up", title:"Day 0 — Mindset & materials",
+  blurb:"No drawing today. Get your head right and your kit sorted. The whole course rests on one idea: for a beginner the finished drawing doesn't matter — the reps do.",
+  tasks:[
+   {tag:'main',title:'Read Drawabox Lesson 0',meta:'Getting Started + the "Changing your Mindset" page on play vs. results. <a href="https://drawabox.com/lesson/0" target="_blank" rel="noopener">open →</a>'},
+   {tag:'main',title:'Get your tools',meta:'A fineliner pen (Micron 03/05 or similar) + printer paper. Ink means no erasing — it forces you to commit to each mark.'},
+   {tag:'watch',title:'Watch Proko "Intro to Drawing Basics"',meta:'Sets up how the course works. <a href="https://www.proko.com/course-lesson/intro-to-drawing-basics" target="_blank" rel="noopener">open →</a>'},
+  ]},
+ {focus:"Lines", title:"Superimposed lines",
+  blurb:"Drawing from the shoulder, not the wrist. Today is about confident, ghosted strokes that don't wobble.",
+  tasks:[ W("Skip today — first real session."),
+   dbox('1','Drawabox L1 — Superimposed lines','Fill a page of straight lines, then arcs. Fast, confident, from the shoulder.'),
+   {tag:'main',title:'Ghosted lines',meta:'Plant start & end dots, ghost the motion a few times, then commit in one stroke.'} ]},
+ {focus:"Lines", title:"Ghosted lines & planes",
+  blurb:"Use the ghosting method on everything structural from now on. Accuracy comes second to confidence.",
+  tasks:[ W("1 page superimposed lines."),
+   dbox('1','Drawabox L1 — Ghosted planes','Draw boxes-as-planes, connect corners with ghosted lines.'),
+   {tag:'main',title:'No grinding',meta:'Do the recommended amount and stop. You\'ll keep practising these as warm-ups forever.'} ]},
+ {focus:"Ellipses", title:"Tables of ellipses",
+  blurb:"Ellipses are the other half of your vocabulary. Smooth and confident beats accurate-but-scratchy.",
+  tasks:[ W("Half page ghosted lines + arcs."),
+   dbox('1','Drawabox L1 — Tables of ellipses','Draw through each ellipse 2–3 times. Keep them snappy.'),
+   proko('Proko — sketchbooks, pencils & erasers','Materials episode; sets you up for the observation projects.') ]},
+ {focus:"Ellipses", title:"Ellipses in planes",
+  blurb:"Now fit ellipses snugly inside the planes you drew. This is your first taste of constructing in space.",
+  tasks:[ W("1 table of ellipses."),
+   dbox('1','Drawabox L1 — Ellipses in planes','Touch all four sides of each plane.'),
+   {tag:'main',title:'Funnels',meta:'Ellipses along a curved axis — keeps the minor axis aligned.'} ]},
+ {focus:"Observation", title:"Proko project — draw a pear",
+  blurb:"Time to make a real drawing. Sounds trivial; Proko promises it'll challenge you. Pure observation.",
+  tasks:[ W("1 table of ellipses + half page lines."),
+   proko('Proko — first project: simplified pear (Level 1)','Draw a pear or simple object from observation. Look more than you draw.'),
+   {tag:'main',title:'Compare, don\'t fix',meta:'Hold your drawing next to the subject. Note what\'s off — don\'t erase, just learn.'} ]},
+ // Week 2
+ {focus:"Boxes", title:"Rough perspective",
+  blurb:"Boxes are where spatial reasoning begins. Expect them to look wrong at first — that's the point.",
+  tasks:[ W("Lines + ellipses, 5 min."),
+   dbox('1','Drawabox L1 — Rough perspective','Boxes with edges receding to a single vanishing point.'),
+   {tag:'main',title:'Check with back-lines',meta:'Extend lines to see how far off your VP guesses were.'} ]},
+ {focus:"Boxes", title:"Rotated boxes",
+  blurb:"The hardest L1 exercise. Don't expect to nail it — expect to wrestle with it. That wrestling is the learning.",
+  tasks:[ W("Ghosted lines + 1 ellipse table."),
+   dbox('1','Drawabox L1 — Rotated boxes','One big exercise: boxes rotating around a central point.'),
+   {tag:'main',title:'Keep gaps narrow & even',meta:'Use neighbouring boxes as reference for each new one.'} ]},
+ {focus:"Boxes", title:"Organic perspective",
+  blurb:"Loose flowing boxes through space, growing and shrinking. The fun reward after rotated boxes.",
+  tasks:[ W("Lines + ellipses."),
+   dbox('1','Drawabox L1 — Organic perspective','Ribbons of boxes flowing through the scene, overlapping.'),
+   {tag:'main',title:'Vary size & angle',meta:'Bigger = closer. Let them tumble naturally.'} ]},
+ {focus:"Observation", title:"Proko — observation again",
+  blurb:"Second real drawing. A different simple object. You should already feel your lines getting calmer.",
+  tasks:[ W("1 page mixed L1 exercises."),
+   proko('Proko Drawing Basics — next observation lesson','Draw a new simple object from life.'),
+   {tag:'main',title:'Negative space check',meta:'Glance at the shapes between/around the object to catch proportion errors.'} ]},
+ {focus:"Recovery", title:"Light day — free play",
+  blurb:"A deliberately easy day. Drawabox warns against burnout: play is allowed, and it rebuilds motivation.",
+  tasks:[ W("Just warm up — that's the whole session if you want."),
+   {tag:'main',title:'Draw anything for fun',meta:'No rules. Doodle, copy something you like. Keep the streak alive without pressure.'} ]},
+ {focus:"Submit", title:"Lesson 1 homework + critique",
+  blurb:"Assemble your best L1 pages and post them for free community critique. Feedback is how you improve fastest.",
+  tasks:[ W("5 min warm-up."),
+   dbox('1','Compile Drawabox L1 homework','Photograph your pages: lines, ellipses, boxes.'),
+   {tag:'main',title:'Post for free critique',meta:'Submit to the Drawabox community (Reddit thread linked on the lesson page).'} ]},
+ // Week 3
+ {focus:"Box challenge", title:"250 Box Challenge — begins",
+  blurb:"The single most VFX-relevant exercise in the course: it trains your brain to build objects in believable perspective. ~5–10 boxes per session for the next few weeks.",
+  tasks:[ W("Lines + ellipses, always."),
+   {tag:'main',title:'Boxes 1–8',meta:'Use the line-extension method to check convergence after each box. <a href="https://drawabox.com/lesson/250boxes" target="_blank" rel="noopener">challenge page →</a>'},
+   {tag:'main',title:'Don\'t binge',meta:'A handful per day, done well, beats 50 rushed.'} ]},
+ {focus:"Box challenge", title:"250 Boxes — 9–18",
+  blurb:"Keep checking your line extensions. You'll start to see your error shrink across the set.",
+  tasks:[ W("Warm-up incl. a couple of rotated-box rows."),
+   {tag:'main',title:'Boxes 9–18',meta:'Vary your rates of foreshortening — shallow and dramatic.'},
+   proko('Proko — line confidence / line weight (free clip)','Short watch to reinforce confident edges.') ]},
+ {focus:"Box challenge", title:"250 Boxes — 19–28",
+  blurb:"Halfway feeling like a grind? That's normal. Lean on the Proko project days for morale.",
+  tasks:[ W("5 min mixed."),
+   {tag:'main',title:'Boxes 19–28',meta:'Colour-code your three sets of parallel lines if it helps you see convergence.'} ]},
+ {focus:"Observation", title:"Proko — value & light intro",
+  blurb:"Break from boxes. Start learning how form turns in light — the skill that lets you judge lighting in a plate.",
+  tasks:[ W("Lines + ellipses."),
+   proko('Proko Drawing Basics — shading / light & shadow intro','How light reveals 3D form: light, shadow, core shadow, reflected light.'),
+   {tag:'main',title:'One sphere, shaded',meta:'Apply what you watched to a single sphere from a clear light source.'} ]},
+ {focus:"Box challenge", title:"250 Boxes — 29–40",
+  blurb:"Push through. Each box is quietly rewiring how you see edges and depth.",
+  tasks:[ W("Warm-up."),
+   {tag:'main',title:'Boxes 29–40',meta:'Focus on clean, single-stroke ghosted lines even when tired.'} ]},
+ {focus:"Box challenge", title:"250 Boxes — 41–55 & checkpoint",
+  blurb:"End of Phase 1. You've got confident lines, decent ellipses, and boxes that are starting to sit in real space.",
+  tasks:[ W("Warm-up."),
+   {tag:'main',title:'Boxes 41–55',meta:'Notice how much straighter your guess at the third VP has become.'},
+   {tag:'main',title:'Phase 1 reflection',meta:'Flip back to your day-2 lines. See the difference? That\'s the reps working.'} ]},
+);
+
+// ---------- PHASE 2 : Weeks 4–6 (sessions 19–36) ----------
+const p2 = [];
+for (let i=0;i<6;i++){ // week 4
+  p2.push({focus:"Box challenge", title:`250 Boxes — set ${56+i*10}–${65+i*10}`,
+   blurb:"Phase 2 is the spatial core. Grind the box challenge as your main work; keep it ~10/day.",
+   tasks:[ W("Lines, ellipses, a few rotated boxes."),
+    {tag:'main',title:`Boxes ${56+i*10}–${65+i*10}`,meta:'Line extensions every box. Watch your convergence error shrink.'},
+    (i%2===0)? proko('Proko Drawing Basics — next lesson','Watch one short lesson on form or simplification.')
+             : {tag:'main',title:'10-min observation sketch',meta:'Any object on your desk. Construct it from boxes/cylinders first.'} ]});
+}
+// week 5 — finish boxes, start L2
+p2.push({focus:"Box challenge", title:"250 Boxes — final set & submit",
+  blurb:"Finish the challenge. Compile and post for critique — this is a genuine milestone.",
+  tasks:[ W("Warm-up."),
+   {tag:'main',title:'Final boxes to 250',meta:'Whatever you have left to hit 250.'},
+   {tag:'main',title:'Submit 250 Boxes for critique',meta:'Post to the community. You earned this one.'} ]});
+p2.push({focus:"Texture", title:"Drawabox L2 — arrows & organic forms",
+  blurb:"Lesson 2 begins. Arrows teach you to draw flowing forms moving through 3D space.",
+  tasks:[ W("Now warm up WITH a few boxes from the challenge — that's their job forever."),
+   dbox('2','Drawabox L2 — Arrows','Ghost big confident arrows weaving through space, with foreshortening.'),
+   {tag:'main',title:'Line weight on overlaps',meta:'Add weight where one ribbon passes in front of another.'} ]});
+p2.push({focus:"Texture", title:"L2 — organic forms with contours",
+  blurb:"Sausage-like forms wrapped with contour curves. This is pure 3D-surface reasoning.",
+  tasks:[ W("Boxes + lines."),
+   dbox('2','Drawabox L2 — Organic forms','Simple sausage forms, then add contour lines/ellipses around them.'),
+   {tag:'main',title:'Keep degree shifting',meta:'Contour ellipses widen as they near the form\'s ends.'} ]});
+p2.push({focus:"Texture", title:"L2 — texture & dissections",
+  blurb:"Implying texture through cast shadow, not outlines. Trains restraint and observation.",
+  tasks:[ W("Boxes + organic forms."),
+   dbox('2','Drawabox L2 — Texture analysis & dissections','Study real textures; render with shadow shapes, not scribbles.'),
+   {tag:'main',title:'Less is more',meta:'Imply the texture at the focal edge, let the rest breathe.'} ]});
+p2.push({focus:"Observation", title:"Proko — bigger observation piece",
+  blurb:"Apply L2 thinking to a real object with some texture. Construct first, render second.",
+  tasks:[ W("Boxes + organic forms."),
+   proko('Proko Drawing Basics — observation/shading lesson','Pick a textured object (fruit, fabric, bark).'),
+   {tag:'main',title:'Shadow shapes first',meta:'Block the big shadow shape before any detail.'} ]});
+// week 6 — L2 form intersections + submit, more proko
+p2.push({focus:"Construction", title:"L2 — form intersections",
+  blurb:"Where boxes, spheres and cylinders overlap and you draw the intersection line. Hard, and hugely useful for combining shapes.",
+  tasks:[ W("Boxes + organic forms."),
+   dbox('2','Drawabox L2 — Form intersections','Draw simple primitives overlapping; find where their surfaces meet.'),
+   {tag:'main',title:'Believe the volumes',meta:'The intersection line tells you the forms are solid, not hollow.'} ]});
+p2.push({focus:"Construction", title:"L2 — organic intersections",
+  blurb:"Sausage forms slumping and resting on each other under gravity. The payoff exercise of Lesson 2.",
+  tasks:[ W("Warm-up."),
+   dbox('2','Drawabox L2 — Organic intersections','Pile of organic forms; show weight, sag and cast shadow.'),
+   {tag:'main',title:'Add cast shadows',meta:'Ground the pile with shadows pooling where forms meet.'} ]});
+p2.push({focus:"Submit", title:"Lesson 2 homework + critique",
+  blurb:"Compile and submit Lesson 2. Then reward yourself with a free-play day next.",
+  tasks:[ W("Warm-up."),
+   {tag:'main',title:'Compile & post L2 homework',meta:'Arrows, organic forms, texture, intersections.'} ]});
+p2.push({focus:"Recovery", title:"Light day — draw for joy",
+  blurb:"Mid-course reset. Drawabox is a slog by design; finishing a fun drawing is the fuel that keeps you going.",
+  tasks:[ W("Just warm up if you like."),
+   {tag:'main',title:'Draw something you actually want to',meta:'A character, a plant, your motorbike — anything. Apply construction loosely, have fun.'} ]});
+p2.push({focus:"Observation", title:"Proko — light & shadow deeper",
+  blurb:"Go further into the elements of shading now that you can construct solid forms.",
+  tasks:[ W("Boxes + forms."),
+   proko('Proko Drawing Basics — full shading lesson','Core shadow, occlusion shadow, halftones, highlight, reflected light.'),
+   {tag:'main',title:'Shade a stack of forms',meta:'Apply the full shading vocabulary to a box + sphere + cylinder.'} ]});
+p2.push({focus:"Checkpoint", title:"Phase 2 checkpoint",
+  blurb:"End of the spatial core. You can now build and shade believable 3D forms — the foundation of reading any image.",
+  tasks:[ W("Warm-up."),
+   {tag:'main',title:'Construct one complex object from imagination',meta:'No reference. Build it from primitives. This is the skill set-extension work leans on.'},
+   {tag:'main',title:'Phase 2 reflection',meta:'Compare to your 250-box early attempts. Note the leap.'} ]});
+CURRICULUM.push(...p2);
+
+// ---------- PHASE 3 : Weeks 7–9 (sessions 37–54) ----------
+const p3 = [];
+const p3topics = [
+  ["Drawabox L3 — plant construction intro","Plants are where spatial reasoning is tackled in earnest. Construct leaves from a central flow line + edge detail."],
+  ["L3 — leaves","Draw leaves: flow line first, then the envelope, then edge detailing. Construction discipline."],
+  ["Proko — value scales & edges","Practise a clean value scale and hard/soft edge control."],
+  ["L3 — branches","Segment-by-segment branch construction; ellipses where segments overlap."],
+  ["L3 — flowers / potted plant","Combine leaves, branches and stems into one constructed plant."],
+  ["Proko — observation: a plant from life","Draw a real plant. Construct, then shade with your value vocabulary."],
+];
+for (let wk=0; wk<3; wk++){
+  for (let d=0; d<6; d++){
+    const t = p3topics[(wk*2 + d) % p3topics.length];
+    const isProko = t[0].startsWith("Proko");
+    p3.push({
+      focus: isProko ? "Observation" : (d===5?"Submit":"Construction"),
+      title: t[0].replace("Drawabox ","").replace("L3 — ",""),
+      blurb: t[1] + (wk===2 && d===5 ? " End of Phase 3 — compile Lesson 3 and post for critique." : ""),
+      tasks:[
+        W("Boxes + organic forms + a couple of ellipse tables."),
+        isProko ? proko(t[0], "Watch, then immediately apply it to one drawing.")
+                : dbox('3', t[0], "Flow line → simple envelope → construction → detail."),
+        (wk===2 && d===5)
+          ? {tag:'main',title:'Submit Lesson 3 homework',meta:'Post your plant constructions for free critique.'}
+          : {tag:'main',title:'Construct, never trace',meta:'Build the form in 3D in your head; let reference inform, not dictate.'}
+      ]
+    });
+  }
+}
+CURRICULUM.push(...p3);
+
+// ---------- PHASE 4 : Weeks 10–12 (sessions 55–72) ----------
+const p4 = [];
+const p4topics = [
+  ["Drawabox L4 — insect/animal construction","Lesson 4: build complex subjects from simple 3D primitives — exactly how you'd block a set extension."],
+  ["L4 — masses & sausage method","Add organic masses onto a base form; respect how they wrap the underlying volume."],
+  ["Proko — Figure Drawing intro: gesture","Optional figure track. Gesture first: the flowing line of action before any structure."],
+  ["L4 — detail & texture pass","Apply Lesson-2 texture restraint to a constructed animal at the focal point."],
+  ["Proko — the bean & robo-bean","Ribcage + pelvis as two masses (the 'bean'), then box them up (robo-bean)."],
+  ["Drawabox L5 — animal construction","Lesson 5: larger animals. Full construction pipeline, head to ground shadow."],
+];
+for (let wk=0; wk<3; wk++){
+  for (let d=0; d<6; d++){
+    const idx = (wk*2 + d) % p4topics.length;
+    const t = p4topics[idx];
+    const isProko = t[0].startsWith("Proko");
+    const lessonNum = t[0].includes("L5") ? '5' : '4';
+    const finale = (wk===2 && d===5);
+    p4.push({
+      focus: finale ? "Graduation" : (isProko ? "Figure" : (d===5?"Submit":"Construction")),
+      title: finale ? "Stage 1 complete — the foundations are yours" : t[0].replace("Drawabox ","").replace(/L[45] — /,""),
+      blurb: finale
+        ? "You've gone from wobbly lines to constructing complex subjects in believable 3D space — the hardest part of the whole journey. That eye for form and structure is exactly what a strong Flame artist runs on. Stage 2 is next: now you start drawing people, and working digitally."
+        : t[1],
+      tasks: finale ? [
+        W("One last proper warm-up."),
+        {tag:'main',title:'Draw something ambitious from imagination',meta:'Combine everything: construction, intersections, shading. No reference.'},
+        {tag:'main',title:'Line up day 2 vs today',meta:'Photograph both. This is the proof of how far you\'ve come.'},
+        {tag:'main',title:'Onward to Stage 2',meta:'Tomorrow you start drawing people — gesture, the figure, and your first digital sessions.'}
+      ] : [
+        W("Boxes + forms + ellipses."),
+        isProko ? proko(t[0], "Watch then apply immediately.")
+                : dbox(lessonNum, t[0], "Major forms first, detail last."),
+        (d===5)
+          ? {tag:'main',title:'Compile & submit homework',meta:'Post your latest constructions for critique.'}
+          : {tag:'main',title:'Construct from primitives',meta:'Box the ribcage, cylinder the limbs — think like a 3D blockout.'}
+      ]
+    });
+  }
+}
+CURRICULUM.push(...p4);
+
+// ============================================================
+//  STAGE 2 — Weeks 13–24 : DRAWING REAL THINGS
+//  People (figure + portrait), observational construction,
+//  and the move onto the tablet for digital.
+//  Resources: Proko Figure Drawing Fundamentals (free intro),
+//  Proko Portrait basics, Drawabox L6–7, Ctrl+Paint.
+// ============================================================
+const ctrlpaint = (label, meta) => ({tag:'watch', title:label, meta:`${meta} <a href="https://www.ctrlpaint.com/library" target="_blank" rel="noopener">Ctrl+Paint library →</a>`});
+const prokoFig = (label, meta) => ({tag:'watch', title:label, meta:`${meta} <a href="https://www.youtube.com/watch?v=rNiBjHymU0k" target="_blank" rel="noopener">Proko Figure →</a>`});
+
+const stage2topics = [
+  // Phase 5 — Gesture (wk 13–15)
+  [["Figure","Proko Figure — Introduction & gesture",
+    "Stage 2 begins: drawing people. Everything in the figure starts with gesture — the flowing line of action, captured fast before any structure.",
+    [prokoFig('Proko Figure Drawing — gesture','The rhythm & line of action. Do 30-second gesture sketches.'),
+     {tag:'main',title:'10 × 30-second gestures',meta:'Speed over accuracy. Capture the flow, not the outline.'}]],
+   ["Figure","Gesture — flow & rhythm",
+    "More gesture. You're training your hand to find the big sweeping motion of a pose in seconds.",
+    [prokoFig('Proko Figure — rhythm of the body','Chains of curves flowing through the figure.'),
+     {tag:'main',title:'1 page of 1-minute poses',meta:'Use free pose libraries (e.g. line-of-action.com).'}]],
+   ["Figure","The Bean",
+    "Proko's 'bean' — ribcage and pelvis as two simple masses that twist and tilt against each other. The core of believable posture.",
+    [prokoFig('Proko Figure — the Bean','Two masses, the gesture between them, the twist.'),
+     {tag:'main',title:'Draw 8 beans from poses',meta:'Find the tilt of chest vs hips in each.'}]],
+   ["Figure","Robo-bean",
+    "Box up the bean — turn the two soft masses into solid 3D blocks so you can see them turn in space.",
+    [prokoFig('Proko Figure — Robo-bean','Convert the bean into boxy 3D forms.'),
+     {tag:'main',title:'Robo-bean over your gestures',meta:'Keep the gesture underneath; the structure sits on top.'}]],
+   ["Digital","Ctrl+Paint — getting onto the tablet",
+    "First digital day. Directly useful for your Flame work. Just learn the tool — brushes, strokes, undo.",
+    [ctrlpaint('Ctrl+Paint — Digital Painting 101 (free)','Hardware, brush control, the digital line.'),
+     {tag:'main',title:'Repeat L1 lines & ellipses, digitally',meta:'Your fundamentals, now on the tablet. Notice what feels different.'}]],
+   ["Submit","Gesture checkpoint",
+    "End of the gesture block. Compare your day-1 gestures to today — looser, faster, more alive.",
+    [prokoFig('Optional: post gestures for feedback','Proko community or Reddit.'),
+     {tag:'main',title:'1 page gestures + 1 page beans',meta:'Your warm-up now includes gesture forever.'}]]],
+  // Phase 6 — Structure & proportion (wk 16–18)
+  [["Figure","Mannequinization",
+    "Turn the robo-bean into a simple mannequin — adding limbs as cylinders and boxes. The full simplified figure.",
+    [prokoFig('Proko Figure — mannequinization','Limbs as simple forms attached to the bean.'),
+     {tag:'main',title:'3 mannequins from poses',meta:'Gesture → bean → robo-bean → limbs.'}]],
+   ["Figure","Proportions of the figure",
+    "How many heads tall, where the landmarks sit. A measuring framework so figures stop looking 'off'.",
+    [prokoFig('Proko Figure — proportions','The 7.5–8 head canon and key landmarks.'),
+     {tag:'main',title:'One measured standing figure',meta:'Mark the landmarks before drawing.'}]],
+   ["Construction","Drawabox L6 — drawing everyday objects",
+    "Back to Drawabox: constructing real man-made objects with precision. Sharpens the box skills for hard-surface accuracy.",
+    [dbox('6','Drawabox L6 — Objects','Precise constructional drawing of everyday objects.'),
+     {tag:'main',title:'Construct one object accurately',meta:'Orthographic planning, then build it in perspective.'}]],
+   ["Digital","Ctrl+Paint — value & the digital sketch",
+    "Use the tablet for what it's great at: fast value studies. The light/shadow skill from Stage 1, digital.",
+    [ctrlpaint('Ctrl+Paint — value & sketching','Greyscale thumbnails, blocking shadow shapes.'),
+     {tag:'main',title:'3 greyscale value thumbnails',meta:'Squint at a photo, block 3 values only.'}]],
+   ["Figure","Combining gesture + structure",
+    "The whole pipeline in one drawing: feel the gesture, build the mannequin on it. This is figure drawing.",
+    [prokoFig('Proko Figure — putting it together','Gesture underneath, structure on top.'),
+     {tag:'main',title:'2 full mannequin figures',meta:'2–3 min each. Don\'t lose the gesture.'}]],
+   ["Submit","Figure checkpoint",
+    "End of Phase 6. You can rough out a believable, posed human figure from simple forms.",
+    [{tag:'main',title:'Best figure of the week',meta:'Keep it. You\'ll compare in 12 weeks.'},
+     {tag:'main',title:'Reflection',meta:'Figures are the hardest thing most beginners attempt — and you\'re doing it.'}]]],
+  // Phase 7 — The head & portrait (wk 19–21)
+  [["Portrait","Proko — the Loomis head",
+    "Heads now. The Loomis method: a ball + carved planes that lets you draw a head from any angle.",
+    [{tag:'watch',title:'Proko — how to draw the head (Loomis)',meta:'Ball, side planes, jaw. <a href="https://www.proko.com/course/portrait-drawing-fundamentals" target="_blank" rel="noopener">Proko Portrait →</a>'},
+     {tag:'main',title:'4 heads, different angles',meta:'Construct the ball + plane each time.'}]],
+   ["Portrait","Features — the eye & nose",
+    "Constructing facial features as 3D forms, not flat symbols.",
+    [{tag:'watch',title:'Proko — eyes & nose',meta:'The eye as a ball in a socket; the nose as a wedge. <a href="https://www.proko.com/course/portrait-drawing-fundamentals" target="_blank" rel="noopener">Proko →</a>'},
+     {tag:'main',title:'Fill a page with eyes & noses',meta:'From reference. Form first.'}]],
+   ["Portrait","Features — mouth & ear",
+    "The remaining features, and how they sit on the curved surface of the head.",
+    [{tag:'watch',title:'Proko — mouth & ear',meta:'Lips as forms on a cylinder; ear placement. <a href="https://www.proko.com/course/portrait-drawing-fundamentals" target="_blank" rel="noopener">Proko →</a>'},
+     {tag:'main',title:'Page of mouths & ears',meta:'Wrap them onto the head\'s curve.'}]],
+   ["Portrait","Portrait from reference",
+    "Put the head together: construct, place features, then a light shading pass using your Stage 1 value skills.",
+    [{tag:'main',title:'One constructed portrait',meta:'Loomis head → features → block the shadow shape.'},
+     {tag:'main',title:'Don\'t chase likeness yet',meta:'Correct construction first; likeness follows.'}]],
+   ["Digital","Ctrl+Paint — digital portrait sketch",
+    "Try the head construction on the tablet. Easy undo makes it a great place to experiment.",
+    [ctrlpaint('Ctrl+Paint — sketching workflow','Rough, refine, clean-up layers.'),
+     {tag:'main',title:'Digital head construction',meta:'Loomis method, digitally.'}]],
+   ["Submit","Portrait checkpoint",
+    "End of Phase 7. You can construct a head and place its features in 3D space.",
+    [{tag:'main',title:'Best portrait of the week',meta:'Save it.'},
+     {tag:'main',title:'Reflection',meta:'Heads are notoriously hard. You now have a repeatable method.'}]]],
+  // Phase 8 — Synthesis (wk 22–24)
+  [["Construction","Drawabox L7 — drawing from observation",
+    "Drawabox's final lesson: applying everything to draw complex real objects (e.g. vehicles). The graduation of the construction track.",
+    [dbox('7','Drawabox L7 — Vehicles / observation','Major forms, then subdivide for detail and accuracy.'),
+     {tag:'main',title:'Begin one complex object',meta:'Block the big boxes first. This is a multi-day piece.'}]],
+   ["Construction","L7 — refining the build",
+    "Continue the complex object. Patience and subdivision over speed.",
+    [dbox('7','Drawabox L7 — continue','Subdivide to place details accurately.'),
+     {tag:'main',title:'Add the secondary forms',meta:'Stay on the construction; resist detailing too early.'}]],
+   ["Figure","Figure + environment quick study",
+    "Combine people and objects: a figure interacting with a simple object or space.",
+    [prokoFig('Recall: gesture + mannequin','Warm up with 5 gestures first.'),
+     {tag:'main',title:'Figure using/holding an object',meta:'Construct both; show contact and weight.'}]],
+   ["Digital","Ctrl+Paint — rendering basics",
+    "Push the digital work toward rendering: turning a form with values on the tablet.",
+    [ctrlpaint('Ctrl+Paint — rendering form','Soft vs hard edges, building up value.'),
+     {tag:'main',title:'Render one digital sphere → object',meta:'Full light logic: core shadow, occlusion, reflected light.'}]],
+   ["Project","Self-directed piece",
+    "Your choice. Combine any skills toward something you actually want to make. This is why you started.",
+    [{tag:'main',title:'Plan & start a personal drawing',meta:'Figure, object, or scene — whatever excites you.'},
+     {tag:'main',title:'Apply, don\'t learn',meta:'Today is about using what you have, not new material.'}]],
+   ["Graduation","Stage 2 complete",
+    "Six months in. You can draw people, heads, complex objects, and work digitally. You're no longer a beginner.",
+    [{tag:'main',title:'Finish your personal piece',meta:'Bring it to a state you\'re proud of.'},
+     {tag:'main',title:'Line up Week 1 vs now',meta:'The difference is the whole point.'},
+     {tag:'main',title:'Onward to Stage 3',meta:'Next: perspective, anatomy and light in earnest.'}]]],
+];
+
+CURRICULUM.push(...stage2topics.flat().map(([focus,title,blurb,tasks])=>({
+  focus, title, blurb, tasks:[W("Gestures + a few boxes + ellipses — your standing warm-up."), ...tasks]
+})));
+
+// ============================================================
+//  STAGE 3 — Weeks 25–36 : DEPTH & CONTROL
+//  Perspective in earnest, anatomy building blocks,
+//  value/light studies, digital painting fundamentals.
+// ============================================================
+const mkStage = (topics) => CURRICULUM.push(...topics.flat().map(([focus,title,blurb,tasks])=>({
+  focus, title, blurb, tasks:[W("Standing warm-up: gestures, boxes, ellipses."), ...tasks]
+})));
+
+const stage3 = [
+  // Phase 9 — Perspective (wk 25–27)
+  [["Perspective","1-point perspective in depth",
+    "Stage 3: control. Real perspective study now — starting with one-point: rooms, corridors, a single vanishing point.",
+    [{tag:'main',title:'Draw an interior in 1-point',meta:'Floor grid, objects receding to one VP.'},
+     {tag:'watch',title:'Proko — The Perspective Course (free clips)',meta:'<a href="https://www.proko.com/course/the-perspective-course" target="_blank" rel="noopener">Proko Perspective →</a>'}]],
+   ["Perspective","2-point perspective",
+    "The workhorse of environment drawing. Two vanishing points — buildings, boxes seen from a corner.",
+    [{tag:'main',title:'A street corner / building in 2-point',meta:'Two VPs on the horizon, verticals true.'},
+     {tag:'main',title:'Check with extensions',meta:'Your 250-box instincts pay off here.'}]],
+   ["Perspective","3-point & camera height",
+    "Add the third VP for dramatic up/down shots — directly relevant to comp and camera thinking.",
+    [{tag:'main',title:'A tall building, worm\'s-eye view',meta:'Third VP above or below.'},
+     {tag:'main',title:'Note how camera height changes the feel',meta:'High vs low horizon.'}]],
+   ["Perspective","Ellipses in perspective",
+    "Circles in perspective become ellipses — wheels, cups, arches. Where your ellipse drills meet real depth.",
+    [{tag:'main',title:'Cylinders & wheels in a scene',meta:'Minor axis along the form\'s direction.'},
+     {tag:'main',title:'A simple vehicle in perspective',meta:'Box it, then carve.'}]],
+   ["Digital","Digital perspective thumbnails",
+    "Use the tablet to rough environment thumbnails fast — perspective grids are easy digitally.",
+    [ctrlpaint('Ctrl+Paint — environment sketching','Blocking space and depth.'),
+     {tag:'main',title:'3 environment thumbnails',meta:'Loose, fast, just establishing space.'}]],
+   ["Submit","Perspective checkpoint",
+    "You can now place anything believably in space from any camera angle. Huge for VFX/comp work.",
+    [{tag:'main',title:'One finished perspective scene',meta:'Interior or exterior, your choice.'},
+     {tag:'main',title:'Reflection',meta:'This is the skill that makes set extensions sit right.'}]]],
+  // Phase 10 — Anatomy building blocks (wk 28–30)
+  [["Anatomy","Anatomy — the torso",
+    "Anatomy as simple masses, not memorised muscles. The torso: ribcage, pelvis, the muscles that bridge them.",
+    [prokoFig('Proko Figure — torso anatomy','Major masses of the trunk.'),
+     {tag:'main',title:'Construct 3 torsos',meta:'Build on the bean; add the big forms.'}]],
+   ["Anatomy","Anatomy — arms",
+    "The arm's masses and how they twist. Enough to draw a believable arm, not a textbook.",
+    [prokoFig('Proko Figure — arm anatomy','Upper arm, forearm, the twist.'),
+     {tag:'main',title:'Page of arms in poses',meta:'Simple forms, correct attachment.'}]],
+   ["Anatomy","Anatomy — legs",
+    "The leg's masses and rhythms. The biggest forms in the body.",
+    [prokoFig('Proko Figure — leg anatomy','Thigh, calf, the rhythm.'),
+     {tag:'main',title:'Page of legs in poses',meta:'Watch the front/back rhythm.'}]],
+   ["Anatomy","Hands & feet",
+    "The dreaded hands. Construct them as a boxy mitten mass first, fingers second.",
+    [prokoFig('Proko Figure — hands & feet','Block the mass before the digits.'),
+     {tag:'main',title:'A page of hands',meta:'From your own hand in a mirror.'}]],
+   ["Anatomy","Full figure with anatomy",
+    "Bring the anatomy together on a full posed figure built on your gesture + bean foundation.",
+    [{tag:'main',title:'2 full anatomical figures',meta:'Gesture → bean → masses. Don\'t over-render.'},
+     {tag:'main',title:'Keep the gesture alive',meta:'Anatomy serves the pose, not the reverse.'}]],
+   ["Submit","Anatomy checkpoint",
+    "You can build a figure with believable underlying anatomy. Most people never get this far.",
+    [{tag:'main',title:'Best anatomical figure',meta:'Save it.'},
+     {tag:'main',title:'Reflection',meta:'Compare to your Stage 2 mannequins.'}]]],
+  // Phase 11 — Light & value mastery (wk 31–33)
+  [["Light","The logic of light",
+    "Phase 11: light in earnest. Why a form looks the way it does under a given light — the skill that lets you judge any plate.",
+    [{tag:'watch',title:'Proko — light & form review',meta:'Form principle, cast vs form shadow.'},
+     {tag:'main',title:'Light one object 3 ways',meta:'Same object, three light directions.'}]],
+   ["Light","Edges — hard, soft, lost",
+    "Edge control is what separates flat from photographic. Where edges sharpen and where they dissolve.",
+    [{tag:'main',title:'A study focused only on edges',meta:'Find the hardest and softest edge in a photo.'},
+     {tag:'main',title:'Lose an edge into shadow',meta:'Merge a shadow shape into the background.'}]],
+   ["Light","Value grouping",
+    "Squint and reduce a subject to 3–4 value groups. The foundation of readable images.",
+    [ctrlpaint('Ctrl+Paint — value grouping','Simplify to big value shapes.'),
+     {tag:'main',title:'3-value reduction of a photo',meta:'No more than 3 greys + white.'}]],
+   ["Light","Materials — how surfaces read",
+    "Why metal, skin and cloth look different under the same light. Reflectivity and edge behaviour.",
+    [{tag:'main',title:'Study 3 materials',meta:'A matte, a shiny, and a soft surface.'},
+     {tag:'main',title:'Note the highlight behaviour',meta:'Tight & bright vs broad & dull.'}]],
+   ["Digital","Digital value painting",
+    "A full greyscale digital study, applying everything about light. Core skill for digital/VFX work.",
+    [ctrlpaint('Ctrl+Paint — greyscale painting','Building a value painting start to finish.'),
+     {tag:'main',title:'One greyscale study from a photo',meta:'Big shapes → refine → edges last.'}]],
+   ["Submit","Light checkpoint",
+    "You can read and reproduce how light describes form and material. This is the comp-artist's eye.",
+    [{tag:'main',title:'Best value study',meta:'Save it.'},
+     {tag:'main',title:'Reflection',meta:'You now see light the way a compositor needs to.'}]]],
+  // Phase 12 — Integration (wk 34–36)
+  [["Project","Master study — drawing",
+    "Copy a drawing by an artist you admire, to absorb their decisions. Learning by reverse-engineering.",
+    [{tag:'main',title:'Begin a master study',meta:'Pick a strong drawing; analyse before copying.'},
+     {tag:'main',title:'Ask why, not just what',meta:'Why that edge, that value, that simplification?'}]],
+   ["Project","Master study — finish & analyse",
+    "Complete the study and write down two things you learned to steal for your own work.",
+    [{tag:'main',title:'Finish the study',meta:'Match the big relationships, not every mark.'},
+     {tag:'main',title:'Note 2 takeaways',meta:'Concrete things to apply next time.'}]],
+   ["Figure","Long-pose figure",
+    "A longer, more finished figure drawing — gesture, structure, anatomy and light in one piece.",
+    [{tag:'main',title:'One 20-min figure',meta:'The full pipeline, taken further than usual.'},
+     {tag:'main',title:'Shade with intent',meta:'One clear light source.'}]],
+   ["Digital","Digital illustration start",
+    "Begin a small finished digital piece — your skills, on the tablet, toward a real image.",
+    [ctrlpaint('Ctrl+Paint — workflow review','Sketch → values → refine.'),
+     {tag:'main',title:'Block a digital illustration',meta:'Idea, thumbnail, value block.'}]],
+   ["Project","Digital illustration finish",
+    "Bring the digital piece to a finished state. Edges, focal point, final values.",
+    [{tag:'main',title:'Finish the digital piece',meta:'Strengthen the focal point; lose unimportant edges.'},
+     {tag:'main',title:'Step back & assess',meta:'Squint — does it read?'}]],
+   ["Graduation","Stage 3 complete",
+    "Nine months in. Perspective, anatomy, light, digital — you have genuine range and control now.",
+    [{tag:'main',title:'Assemble a mini-portfolio',meta:'Your 5 best pieces so far.'},
+     {tag:'main',title:'Onward to Stage 4',meta:'Final stage: composition, imagination, and personal voice.'}]]],
+];
+mkStage(stage3);
+
+// ============================================================
+//  STAGE 4 — Weeks 37–48 : BRINGING IT TOGETHER
+//  Composition, drawing from imagination, light logic for
+//  comp work, and sustained personal projects.
+// ============================================================
+const stage4 = [
+  // Phase 13 — Composition (wk 37–39)
+  [["Composition","Principles of composition",
+    "Stage 4: making images, not just studies. How to arrange a frame so the eye goes where you want.",
+    [{tag:'main',title:'5 thumbnail compositions',meta:'Same subject, 5 different arrangements.'},
+     {tag:'main',title:'Pick the strongest & say why',meta:'Focal point, balance, eye-path.'}]],
+   ["Composition","Notan & big shapes",
+    "Black-and-white shape design. A composition works or fails at the level of big shapes.",
+    [{tag:'main',title:'3 two-value notan studies',meta:'Pure black & white shape design.'},
+     {tag:'main',title:'Test readability small',meta:'Shrink it — does it still read?'}]],
+   ["Composition","Focal point & eye-path",
+    "Directing attention with contrast, edges and lines of sight.",
+    [{tag:'main',title:'Design a clear focal point',meta:'Highest contrast & sharpest edge at the focus.'},
+     {tag:'main',title:'Map the eye-path',meta:'Trace where the eye travels.'}]],
+   ["Composition","Perspective + composition",
+    "Combine your perspective control with composition for a designed environment.",
+    [{tag:'main',title:'Composed environment thumbnail',meta:'Real perspective, deliberate framing.'},
+     {tag:'main',title:'Choose camera for impact',meta:'Height & angle as storytelling.'}]],
+   ["Digital","Digital composition studies",
+    "Fast digital comps — the tablet's speed makes iterating compositions painless.",
+    [ctrlpaint('Ctrl+Paint — thumbnailing','Quick value comps.'),
+     {tag:'main',title:'6 digital thumbnails',meta:'Two minutes each. Quantity breeds options.'}]],
+   ["Submit","Composition checkpoint",
+    "You can design a frame deliberately rather than hope it works. The director's eye.",
+    [{tag:'main',title:'Best composed thumbnail → develop it',meta:'Take one further.'},
+     {tag:'main',title:'Reflection',meta:'This is what separates a study from a picture.'}]]],
+  // Phase 14 — From imagination (wk 40–42)
+  [["Imagination","Drawing from imagination — objects",
+    "Phase 14: no reference. Build objects from your understanding of form. The real test of everything so far.",
+    [{tag:'main',title:'5 objects from imagination',meta:'Construct from primitives, no reference.'},
+     {tag:'main',title:'Use reference to check, after',meta:'Draw first, verify second.'}]],
+   ["Imagination","Figures from imagination",
+    "Posed figures with no reference — gesture, bean and anatomy doing their job from memory.",
+    [{tag:'main',title:'3 figures from imagination',meta:'Lean on the pipeline you\'ve drilled.'},
+     {tag:'main',title:'Note where it breaks down',meta:'That\'s your next study target.'}]],
+   ["Imagination","Environments from imagination",
+    "Invent a believable space using perspective and composition from your head.",
+    [{tag:'main',title:'One invented environment',meta:'Establish a horizon & VPs, then build.'},
+     {tag:'main',title:'Keep light consistent',meta:'One light source, obeyed everywhere.'}]],
+   ["Imagination","Targeted study to fill a gap",
+    "Pick the thing that broke down in imagination this week and do focused reference study on it.",
+    [{tag:'main',title:'Study your weakest area',meta:'Hands, a vehicle type, a material — whatever failed.'},
+     {tag:'main',title:'Then redraw it from memory',meta:'Close the loop.'}]],
+   ["Digital","Digital concept sketch",
+    "An imagination-based concept piece, digitally — the bread and butter of production art.",
+    [{tag:'main',title:'Block a concept from imagination',meta:'Thumbnail → value → refine.'},
+     {tag:'main',title:'Design as you go',meta:'Let happy accidents inform it.'}]],
+   ["Submit","Imagination checkpoint",
+    "You can generate believable images from your head. This is the goal most people never reach.",
+    [{tag:'main',title:'Best imaginative piece',meta:'Save it.'},
+     {tag:'main',title:'Reflection',meta:'Reference is now a tool you choose, not a crutch you need.'}]]],
+  // Phase 15 — Personal projects (wk 43–45)
+  [["Project","Define a personal project",
+    "Phase 15: a sustained piece that matters to you. Scope it, gather reference, plan the stages.",
+    [{tag:'main',title:'Choose & scope your project',meta:'Ambitious but finishable in ~2 weeks of sessions.'},
+     {tag:'main',title:'Moodboard & thumbnails',meta:'Gather reference; 5 composition thumbnails.'}]],
+   ["Project","Project — construction pass",
+    "Build the underdrawing properly: perspective, construction, gesture — all your fundamentals.",
+    [{tag:'main',title:'Full construction underdrawing',meta:'Get the bones right before any rendering.'},
+     {tag:'main',title:'Check it cold tomorrow',meta:'Fresh eyes catch errors.'}]],
+   ["Project","Project — value pass",
+    "Block the big value design. Composition reads in greyscale before any detail.",
+    [{tag:'main',title:'Block major values',meta:'3–4 value groups, focal point planned.'},
+     {tag:'main',title:'Squint test',meta:'Does the focal point win?'}]],
+   ["Project","Project — refinement",
+    "Refine forms and edges. Push detail only where it serves the focal point.",
+    [{tag:'main',title:'Refine the focal area',meta:'Sharpest edges & detail at the focus.'},
+     {tag:'main',title:'Lose edges elsewhere',meta:'Let secondary areas stay quiet.'}]],
+   ["Project","Project — finish",
+    "Final pass. Step back, fix what nags, and call it done.",
+    [{tag:'main',title:'Finishing pass',meta:'Highlights, accents, final checks.'},
+     {tag:'main',title:'Declare it finished',meta:'Done is better than fiddled-to-death.'}]],
+   ["Submit","Project checkpoint",
+    "You took a piece from blank page to finished through a real production pipeline. That's professional practice.",
+    [{tag:'main',title:'Present your finished piece',meta:'Add it to your portfolio.'},
+     {tag:'main',title:'Reflection',meta:'Note what you\'d do differently next time.'}]]],
+  // Phase 16 — Mastery & momentum (wk 46–48)
+  [["Voice","Finding your direction",
+    "Phase 16: the last stretch. What do YOU want to draw? Explore subjects and styles that pull you.",
+    [{tag:'main',title:'Explore 3 directions',meta:'Quick pieces in 3 different subjects/styles.'},
+     {tag:'main',title:'Notice what energises you',meta:'Follow the fun — it\'s information.'}]],
+   ["Voice","Studying artists you admire",
+    "Analyse 2–3 artists whose work you love. What specific choices make it theirs?",
+    [{tag:'main',title:'Break down 2 artists\' work',meta:'Shapes, edges, palette, subject.'},
+     {tag:'main',title:'List what to borrow',meta:'Influence, not imitation.'}]],
+   ["Project","Second personal project — start",
+    "Apply everything, faster and more confidently than the first. Scope and block it.",
+    [{tag:'main',title:'Scope & thumbnail project 2',meta:'Aim higher than project 1.'},
+     {tag:'main',title:'Construction + value block',meta:'You know the pipeline now.'}]],
+   ["Project","Second project — develop",
+    "Drive it forward. Trust your process.",
+    [{tag:'main',title:'Refinement pass',meta:'Focal point, edges, detail hierarchy.'},
+     {tag:'main',title:'Compare your pace to project 1',meta:'Faster? More assured? That\'s growth.'}]],
+   ["Project","Second project — finish",
+    "Complete it. Two finished pieces is the start of a body of work.",
+    [{tag:'main',title:'Finish project 2',meta:'Final pass, then stop.'},
+     {tag:'main',title:'Add to portfolio',meta:'Now you have a collection.'}]],
+   ["Graduation","Course complete — one year of drawing",
+    "Forty-eight weeks. You went from your first wobbly line to finished imaginative pieces through a real pipeline. You are, by any honest measure, a capable drawer — and the eye you've built is exactly what makes a strong Flame artist. Keep the warm-ups, keep making work, and revisit any phase as a refresher whenever you like. The gym stays open.",
+    [{tag:'main',title:'Lay out Week 1 vs Week 48',meta:'Your very first page beside your last. This is the proof.'},
+     {tag:'main',title:'Set your next 12-week goal',meta:'Repeat a stage, go deep on one subject, or start drawing daily for its own sake.'},
+     {tag:'main',title:'Thank-you to past-you',meta:'For showing up 15 minutes a day. That\'s how this was always going to work.'}]]],
+];
+mkStage(stage4);
+
+// ============================================================
+//  STATE  (persisted)
+// ============================================================
+const TOTAL = CURRICULUM.length;
+const KEY = 'drawingGym.v1';
+
+function defaultState(){
+  return { idx:0, completedCount:0, streak:0, lastCompleteDate:null, checks:{}, doneSessions:{}, updatedAt:0 };
+}
+let state = defaultState();
+
+// Local persistence: prefer artifact window.storage, else localStorage, else memory.
+let mem = defaultState();
+const hasArtifactStorage = typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+const hasLocalStorage = (() => { try { return typeof localStorage !== 'undefined'; } catch(e){ return false; } })();
+
+async function getState(){
+  if (hasArtifactStorage){
+    try { const r = await window.storage.get(KEY); if (r && r.value) return normaliseState(JSON.parse(r.value)); } catch(e){}
+    return defaultState();
+  }
+  if (hasLocalStorage){
+    try { const v = localStorage.getItem(KEY); if (v) return normaliseState(JSON.parse(v)); } catch(e){}
+    return defaultState();
+  }
+  return mem;
+}
+async function saveState(s, opts){
+  s.updatedAt = Date.now();
+  mem = s;
+  if (hasArtifactStorage){ try { await window.storage.set(KEY, JSON.stringify(s)); } catch(e){ console.warn('save failed', e); } }
+  else if (hasLocalStorage){ try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(e){ console.warn('save failed', e); } }
+  // push to cloud unless this save originated FROM the cloud
+  if (!(opts && opts.fromCloud)) cloudPush(s);
+}
+function normaliseState(s){ return Object.assign(defaultState(), s); }
+
+// ============================================================
+//  CLOUD SYNC  (Firebase Firestore — optional, automatic)
+//  ----------------------------------------------------------
+//  To turn this on, paste your Firebase web config into
+//  FIREBASE_CONFIG below (see the setup notes that came with
+//  this file). Leave it as-is to keep the app fully local.
+//
+//  How it works once configured:
+//   - You set a "Sync ID" (any phrase) on each device.
+//   - All devices using the same Sync ID share one cloud
+//     record and update each other automatically & live.
+//   - No accounts or logins required.
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAG1NFLJfP4LpG_4L6ywDeNvP43QOy5Rbw",
+  authDomain: "piccaso-72ae9.firebaseapp.com",
+  projectId: "piccaso-72ae9",
+  storageBucket: "piccaso-72ae9.firebasestorage.app",
+  messagingSenderId: "401861814771",
+  appId: "1:401861814771:web:0e6bb9fe483a473ac2ca86"
+};
+const SDK_VER = "12.14.0";
+const SYNCID_KEY = "drawingGym.syncId";
+
+let cloud = { ready:false, db:null, docRef:null, unsub:null, syncId:null, applyingRemote:false, status:'off' };
+
+function firebaseConfigured(){
+  return !!(FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId);
+}
+function getSyncId(){
+  if (hasLocalStorage){ try { return localStorage.getItem(SYNCID_KEY) || null; } catch(e){} }
+  return cloud.syncId;
+}
+function setSyncIdLocal(id){
+  cloud.syncId = id;
+  if (hasLocalStorage){ try { localStorage.setItem(SYNCID_KEY, id); } catch(e){} }
+}
+// turn an arbitrary phrase into a safe Firestore document id
+function slugifySyncId(raw){
+  return (raw||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80);
+}
+
+async function initCloud(){
+  if (!firebaseConfigured()){ setSyncStatus('off'); return; }
+  const id = getSyncId();
+  if (!id){ setSyncStatus('needs-id'); return; }
+  setSyncStatus('connecting');
+  try {
+    const [{ initializeApp }, { getAuth, signInAnonymously, onAuthStateChanged },
+           { getFirestore, doc, getDoc, setDoc, onSnapshot }] = await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${SDK_VER}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${SDK_VER}/firebase-auth.js`),
+      import(`https://www.gstatic.com/firebasejs/${SDK_VER}/firebase-firestore.js`),
+    ]);
+    const app = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    cloud.db = getFirestore(app);
+    cloud._fs = { doc, getDoc, setDoc, onSnapshot };
+
+    await signInAnonymously(auth).catch(e=>{ throw new Error('Anonymous auth failed — enable it in Firebase Auth. ('+e.code+')'); });
+    await new Promise(res=>{ const off=onAuthStateChanged(auth, u=>{ if(u){ off(); res(); } }); });
+
+    cloud.docRef = doc(cloud.db, 'gyms', slugifySyncId(id));
+    cloud.ready = true;
+
+    // initial reconcile: whichever side is newer wins; merge doneSessions either way
+    let remote=null;
+    try { const snap = await getDoc(cloud.docRef); if (snap.exists()) remote = snap.data().state; } catch(e){}
+    if (remote){
+      const merged = mergeStates(state, remote);
+      state = merged;
+      await saveState(state, {fromCloud:true});
+      // if our local was newer/equal, push the merged copy up so cloud isn't stale
+      if ((state.updatedAt||0) >= (remote.updatedAt||0)) await rawCloudWrite(state);
+      render();
+    } else {
+      await rawCloudWrite(state); // seed the cloud with what we have
+    }
+
+    // live listener
+    cloud.unsub = onSnapshot(cloud.docRef, snap=>{
+      if (!snap.exists()) return;
+      const remote = snap.data().state;
+      if (!remote) return;
+      if (cloud.applyingRemote) return;
+      // ignore our own echo
+      if ((remote.updatedAt||0) <= (state.updatedAt||0) && remote.idx===state.idx
+          && Object.keys(remote.doneSessions||{}).length === Object.keys(state.doneSessions||{}).length) return;
+      const merged = mergeStates(state, remote);
+      cloud.applyingRemote = true;
+      state = merged;
+      saveState(state, {fromCloud:true}).then(()=>{ cloud.applyingRemote=false; render(); });
+    }, err=>{ setSyncStatus('error'); console.warn('snapshot error', err); });
+
+    setSyncStatus('on');
+  } catch(e){
+    console.warn('Cloud init failed:', e);
+    cloud.ready=false; setSyncStatus('error', e.message);
+  }
+}
+
+async function rawCloudWrite(s){
+  if (!cloud.ready) return;
+  try { await cloud._fs.setDoc(cloud.docRef, { state:s, ts: Date.now() }, { merge:true }); }
+  catch(e){ console.warn('cloud write failed', e); }
+}
+let pushTimer=null;
+function cloudPush(s){
+  if (!cloud.ready || cloud.applyingRemote) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(()=>rawCloudWrite(s), 400); // debounce rapid ticks
+}
+
+// Merge two states: take the higher streak/idx by recency, union completed sessions & ticks.
+function mergeStates(a, b){
+  const newer = (b.updatedAt||0) > (a.updatedAt||0) ? b : a;
+  const older = newer === b ? a : b;
+  const out = normaliseState(newer);
+  // union doneSessions (a tick anywhere counts)
+  out.doneSessions = Object.assign({}, older.doneSessions, newer.doneSessions);
+  // union per-session checks
+  out.checks = Object.assign({}, older.checks, newer.checks);
+  out.completedCount = Object.keys(out.doneSessions).length;
+  // streak & position follow the newer save
+  out.idx = newer.idx;
+  out.streak = newer.streak;
+  out.lastCompleteDate = newer.lastCompleteDate;
+  out.updatedAt = Math.max(a.updatedAt||0, b.updatedAt||0);
+  return out;
+}
+
+function setSyncStatus(s, detail){
+  cloud.status = s;
+  const el = document.getElementById('cloudStatus');
+  if (!el) return;
+  const map = {
+    'off':        ['Local only', 'Cloud sync isn\'t set up. Add your Firebase config to enable it.'],
+    'needs-id':   ['Set a Sync ID', 'Enter a Sync ID below to start syncing across devices.'],
+    'connecting': ['Connecting…', 'Reaching the cloud…'],
+    'on':         ['● Syncing', 'Auto-syncing. Changes appear on all devices using this Sync ID.'],
+    'error':      ['Sync error', detail || 'Could not connect. Your progress is still saved on this device.'],
+  };
+  const [label, note] = map[s] || ['',''];
+  el.querySelector('.cs-label').textContent = label;
+  el.querySelector('.cs-note').textContent = note;
+  el.className = 'cloud-status cs-' + s;
+}
+
+// ============================================================
+//  DATE HELPERS for streak
+// ============================================================
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function isYesterday(prev){
+  if(!prev) return false;
+  const d=new Date(); d.setDate(d.getDate()-1);
+  return prev === d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+
+// ============================================================
+//  PHASE LOOKUP
+//  Stage 1 phases are larger (Day 0 + box challenge spread).
+//  Everything from Phase 5 on is a clean 6 sessions per phase.
+//  Boundaries are computed from real sizes so the labels never drift.
+// ============================================================
+const PHASE_SIZES = [18, 18, 18, 17,   // Stage 1 = 71 sessions
+                     6,6,6,6,           // Stage 2
+                     6,6,6,6,           // Stage 3
+                     6,6,6,6];          // Stage 4
+// cumulative start index of each phase
+const PHASE_STARTS = (() => { const a=[]; let c=0; for(const sz of PHASE_SIZES){ a.push(c); c+=sz; } return a; })();
+// first week number of each phase (from the "Wk a–b" string)
+const PHASE_FIRST_WEEK = PHASES.map(p => parseInt(p.weeks.replace(/[^0-9–-]/g,'').split(/[–-]/)[0], 10));
+
+function phaseForIndex(i){
+  let n = 1;
+  for (let p=0; p<PHASE_STARTS.length; p++){ if (i >= PHASE_STARTS[p]) n = p+1; }
+  const within = i - PHASE_STARTS[n-1];
+  const wk = PHASE_FIRST_WEEK[n-1] + Math.floor(within/6);
+  return { n, wk };
+}
+function stageForPhase(n){ return Math.ceil(n/4); }
+
+// ============================================================
+//  RENDER
+// ============================================================
+const card = document.getElementById('card');
+const checkmark = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function render(){
+  const i = Math.min(state.idx, TOTAL-1);
+  const s = CURRICULUM[i];
+  const ph = phaseForIndex(i);
+  const phaseDef = PHASES[ph.n-1];
+
+  // stats
+  document.getElementById('streak').textContent = state.streak;
+  document.getElementById('completed').textContent = state.completedCount;
+  document.getElementById('progress').textContent = Math.round((state.completedCount/TOTAL)*100)+'%';
+
+  const stageNo = stageForPhase(ph.n);
+  const stageDef = STAGES[stageNo-1];
+  document.getElementById('phaseLabel').innerHTML = `Stage ${stageNo} &middot; ${stageDef.name} &middot; Phase ${phaseDef.no}: ${phaseDef.name}`;
+  document.getElementById('weekLabel').textContent = `Week ${ph.wk} of 48 · Session ${i+1}/${TOTAL}`;
+
+  const checks = state.checks[i] || [];
+  const tasksHTML = s.tasks.map((t,ti)=>{
+    const on = checks[ti] ? 'checked':'';
+    return `<li class="task ${on}" data-ti="${ti}" role="checkbox" aria-checked="${checks[ti]?'true':'false'}" tabindex="0">
+      <span class="box">${checkmark}</span>
+      <span class="t-body">
+        <span class="t-title">${t.title}<span class="tag ${t.tag}">${t.tag}</span></span>
+        <span class="t-meta">${t.meta}</span>
+      </span>
+    </li>`;
+  }).join('');
+
+  const allDone = s.tasks.every((_,ti)=>checks[ti]);
+  const alreadyComplete = state.doneSessions[i];
+
+  card.innerHTML = `
+    <div class="sess-no">SESSION ${String(i+1).padStart(2,'0')} / ${TOTAL}</div>
+    <h2>${s.title}</h2>
+    <span class="focus">${s.focus}</span>
+    <p class="blurb">${s.blurb}</p>
+    <ul class="tasks">${tasksHTML}</ul>
+    <div class="done-stamp ${(allDone||alreadyComplete)?'show':''}" id="doneStamp">
+      ✓ Session complete
+      <small>${i+1<TOTAL ? 'Come back tomorrow — consistency beats marathon sessions.' : 'You finished the course. Genuinely well done.'}</small>
+    </div>
+  `;
+
+  // wire task toggles
+  card.querySelectorAll('.task').forEach(el=>{
+    const toggle = ()=>{
+      const ti = +el.dataset.ti;
+      const arr = state.checks[i] ? [...state.checks[i]] : [];
+      arr[ti] = !arr[ti];
+      state.checks[i] = arr;
+      saveState(state); render();
+    };
+    el.addEventListener('click', toggle);
+    el.addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggle(); } });
+  });
+
+  // buttons
+  const completeBtn = document.getElementById('completeBtn');
+  completeBtn.textContent = alreadyComplete ? 'Go to next session ›' : 'Mark session complete';
+  document.getElementById('backBtn').disabled = i===0;
+  document.getElementById('skipBtn').style.display = alreadyComplete ? 'none':'inline-block';
+
+  renderMap(ph.n);
+}
+
+function renderMap(activePhase){
+  const activeStage = stageForPhase(activePhase);
+  const el = document.getElementById('phaseMap');
+  el.innerHTML = STAGES.map(st=>{
+    const stageCls = st.no===activeStage ? 'active' : (st.no<activeStage ? 'past' : 'future');
+    // the four phases belonging to this stage
+    const phases = PHASES.filter(p=>stageForPhase(p.no)===st.no);
+    const phaseRows = (st.no===activeStage)
+      ? `<div class="phase-sub">${phases.map(p=>{
+          const c = p.no===activePhase ? 'pactive' : (p.no<activePhase?'pdone':'');
+          return `<div class="mini-phase ${c}"><span class="mini-no">${p.no}</span> ${p.name} <span class="mini-wk">${p.weeks}</span></div>`;
+        }).join('')}</div>`
+      : '';
+    return `<div class="stage-block ${stageCls}">
+        <div class="stage-row">
+          <span class="sno">Stage ${st.no}</span>
+          <span class="sname">${st.name}</span>
+          <span class="swk">${st.weeks}</span>
+        </div>
+        <div class="ssub">${st.sub}</div>
+        ${phaseRows}
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+//  ACTIONS
+// ============================================================
+function completeSession(){
+  const i = state.idx;
+  if (!state.doneSessions[i]){
+    state.doneSessions[i] = true;
+    state.completedCount = Object.keys(state.doneSessions).length;
+    // streak logic — one increment per calendar day
+    const today = todayStr();
+    if (state.lastCompleteDate !== today){
+      if (isYesterday(state.lastCompleteDate) || state.lastCompleteDate===null){
+        state.streak += 1;
+      } else if (state.lastCompleteDate !== today){
+        state.streak = 1;
+      }
+      state.lastCompleteDate = today;
+    }
+    saveState(state); render();
+    // brief stamp, then allow advancing
+    return;
+  }
+  // already complete -> advance
+  if (state.idx < TOTAL-1){ state.idx++; saveState(state); render(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function skip(){
+  // mark all tasks checked + complete without streak fuss? still counts as done
+  completeSessionSilent();
+}
+function completeSessionSilent(){
+  const i = state.idx;
+  if (!state.doneSessions[i]){
+    state.doneSessions[i]=true;
+    state.completedCount = Object.keys(state.doneSessions).length;
+    const today=todayStr();
+    if(state.lastCompleteDate!==today){
+      if(isYesterday(state.lastCompleteDate)||state.lastCompleteDate===null) state.streak+=1;
+      else state.streak=1;
+      state.lastCompleteDate=today;
+    }
+  }
+  if (state.idx < TOTAL-1) state.idx++;
+  saveState(state); render(); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function back(){
+  if (state.idx>0){ state.idx--; saveState(state); render(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+async function resetAll(){
+  if (!confirm('Reset all progress, streak and ticks? This cannot be undone.')) return;
+  state = defaultState();
+  await saveState(state);
+  render();
+}
+
+document.getElementById('completeBtn').addEventListener('click', completeSession);
+document.getElementById('skipBtn').addEventListener('click', skip);
+document.getElementById('backBtn').addEventListener('click', back);
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+// ============================================================
+//  BACKUP / RESTORE  (cross-device, no accounts)
+//  A backup code is the state JSON, base64-encoded with a small
+//  header so we can validate it on restore.
+// ============================================================
+const syncBox = document.getElementById('syncBox');
+const syncMsg = document.getElementById('syncMsg');
+function showMsg(text, kind){ syncMsg.textContent = text; syncMsg.className = 'sync-msg ' + (kind||''); }
+
+function makeCode(){
+  const payload = { _app:'drawingGym', v:1, state };
+  // encode safely for unicode
+  return 'DG1:' + btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
+
+async function doBackup(){
+  const code = makeCode();
+  syncBox.value = code;
+  syncBox.focus(); syncBox.select();
+  let copied = false;
+  try { await navigator.clipboard.writeText(code); copied = true; } catch(e){ /* clipboard may be blocked */ }
+  showMsg(copied
+    ? 'Backup code copied to clipboard. Paste it into the box on your other device and tap Restore.'
+    : 'Backup code ready above — long-press / Ctrl-C to copy it, then paste on your other device.', 'ok');
+}
+
+async function doRestore(){
+  const raw = (syncBox.value || '').trim();
+  if (!raw){ showMsg('Paste a backup code into the box first.', 'err'); return; }
+  let parsed;
+  try {
+    if (!raw.startsWith('DG1:')) throw new Error('not a Drawing Gym code');
+    const json = decodeURIComponent(escape(atob(raw.slice(4))));
+    parsed = JSON.parse(json);
+    if (parsed._app !== 'drawingGym' || !parsed.state) throw new Error('wrong contents');
+  } catch(e){
+    showMsg('That doesn\'t look like a valid backup code. Copy the whole thing, starting with "DG1:".', 'err');
+    return;
+  }
+  if (!confirm('Restore this backup? It will replace the progress currently on this device.')) return;
+  // merge defensively against the default shape
+  state = Object.assign(defaultState(), parsed.state);
+  state.completedCount = Object.keys(state.doneSessions||{}).length;
+  await saveState(state);
+  render();
+  showMsg('Restored. You\'re on session ' + (state.idx+1) + ' with a ' + state.streak + '-day streak.', 'ok');
+}
+
+document.getElementById('backupBtn').addEventListener('click', doBackup);
+document.getElementById('restoreBtn').addEventListener('click', doRestore);
+
+// ============================================================
+//  CLOUD SYNC UI WIRING
+// ============================================================
+const syncIdInput = document.getElementById('syncIdInput');
+const syncConnectBtn = document.getElementById('syncConnectBtn');
+const syncDisconnectBtn = document.getElementById('syncDisconnectBtn');
+const cloudIntro = document.getElementById('cloudIntro');
+
+function reflectCloudUI(){
+  const configured = firebaseConfigured();
+  const id = getSyncId();
+  if (!configured){
+    cloudIntro.innerHTML = 'Cloud sync is ready in the code but not switched on. Add your Firebase config (in the <code>FIREBASE_CONFIG</code> block near the top of the script, per the setup notes) and reload. Until then, use the backup code below — it needs no setup.';
+    syncIdInput.disabled = true; syncConnectBtn.disabled = true;
+    return;
+  }
+  syncIdInput.disabled = false; syncConnectBtn.disabled = false;
+  if (id){
+    syncIdInput.value = id;
+    syncConnectBtn.style.display = 'none';
+    syncDisconnectBtn.style.display = 'inline-block';
+  } else {
+    syncConnectBtn.style.display = 'inline-block';
+    syncDisconnectBtn.style.display = 'none';
+  }
+}
+
+async function connectSync(){
+  const raw = syncIdInput.value;
+  const slug = slugifySyncId(raw);
+  if (!slug || slug.length < 3){
+    setSyncStatus('error', 'Pick a Sync ID with at least 3 letters or numbers.');
+    return;
+  }
+  setSyncIdLocal(raw.trim());
+  reflectCloudUI();
+  await initCloud();
+}
+
+function disconnectSync(){
+  if (!confirm('Stop syncing on this device? Your progress stays here, but changes will no longer be shared. You can reconnect with the same Sync ID anytime.')) return;
+  if (cloud.unsub){ try { cloud.unsub(); } catch(e){} }
+  cloud = { ready:false, db:null, docRef:null, unsub:null, syncId:null, applyingRemote:false, status:'off' };
+  if (hasLocalStorage){ try { localStorage.removeItem(SYNCID_KEY); } catch(e){} }
+  reflectCloudUI();
+  setSyncStatus(firebaseConfigured() ? 'needs-id' : 'off');
+}
+
+syncConnectBtn.addEventListener('click', connectSync);
+syncDisconnectBtn.addEventListener('click', disconnectSync);
+syncIdInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); connectSync(); } });
+
+// ============================================================
+//  INIT
+// ============================================================
+(async ()=>{
+  state = await getState();
+  render();
+  reflectCloudUI();
+  // bring up cloud sync if configured + a sync id is already saved
+  initCloud();
+})();
+</script>
+</body>
+</html>
