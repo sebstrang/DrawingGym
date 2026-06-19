@@ -364,7 +364,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Daily practice &middot; Drawabox + Proko</div>
+    <div class="eyebrow">Daily practice &middot; Drawabox + Love Life Drawing</div>
     <h1>The Drawing<br>Gym<span class="ink-drop">.</span></h1>
     <p class="tagline">One session a day. No grinding, no chasing pretty pictures &mdash; just the reps that build a real eye and a confident hand.</p>
   </header>
@@ -425,7 +425,7 @@
   </div>
 
   <footer>
-    Built around free resources: <strong>Drawabox</strong> (drawabox.com) for spatial reasoning &amp; ink mark-making, <strong>Proko</strong> (proko.com / YouTube) for figure, portrait, form &amp; shading, and <strong>Ctrl+Paint</strong> (ctrlpaint.com) for digital. A 48-week course in four stages. Tools: a fineliner pen + cheap paper to start; a tablet from Stage 2.
+    Built around free resources: <strong>Drawabox</strong> (drawabox.com) for spatial reasoning &amp; ink mark-making, <strong>Love Life Drawing</strong> (lovelifedrawing.com) for figure, gesture &amp; portrait, and <strong>Ctrl+Paint</strong> (ctrlpaint.com) for digital — with the occasional free Proko YouTube video where it's the clearest explanation. Everything linked is free. A 48-week course in four stages. Tools: a fineliner pen + cheap paper to start; a tablet from Stage 2.
     <br><br>
     <button class="reset-link" id="resetBtn">Reset all progress</button>
   </footer>
@@ -469,9 +469,16 @@ const STAGES = [
 // reusable warm-up task
 const W = (txt) => ({ tag:'warmup', title:'Warm-up (3–5 min)', meta: txt });
 
-// Helper to make Drawabox / Proko link tasks
+// Helpers for task links. All destinations are free.
 const dbox = (lesson, label, meta) => ({ tag:'main', title:label, meta:`${meta} <a href="https://drawabox.com/lesson/${lesson}" target="_blank" rel="noopener">open lesson →</a>` });
-const proko = (label, meta) => ({ tag:'watch', title:label, meta:`${meta} <a href="https://www.proko.com/course/drawing-basics" target="_blank" rel="noopener">open Proko →</a>` });
+// Generic free-resource watch task. Pass a label, meta, and a full URL + link text.
+const watch = (label, meta, url, linkText) => ({ tag:'watch', title:label, meta:`${meta} <a href="${url}" target="_blank" rel="noopener">${linkText} →</a>` });
+// Love Life Drawing — fully free figure/gesture/portrait teaching (site + YouTube).
+const lld = (label, meta, path) => watch(label, meta, 'https://www.lovelifedrawing.com'+(path||'/tutorials/'), 'Love Life Drawing');
+// Stage 1 observation/shading days: kept free via Love Life Drawing foundational tutorials.
+const proko = (label, meta) => lld(label, meta, '/tutorials/');
+// Figure-specific helper used in Stages 2–3.
+const prokoFig = (label, meta) => lld(label, meta, '/gesture-series/');
 
 const CURRICULUM = [];
 
@@ -482,7 +489,7 @@ CURRICULUM.push(
   tasks:[
    {tag:'main',title:'Read Drawabox Lesson 0',meta:'Getting Started + the "Changing your Mindset" page on play vs. results. <a href="https://drawabox.com/lesson/0" target="_blank" rel="noopener">open →</a>'},
    {tag:'main',title:'Get your tools',meta:'A fineliner pen (Micron 03/05 or similar) + printer paper. Ink means no erasing — it forces you to commit to each mark.'},
-   {tag:'watch',title:'Watch Proko "Intro to Drawing Basics"',meta:'Sets up how the course works. <a href="https://www.proko.com/course-lesson/intro-to-drawing-basics" target="_blank" rel="noopener">open →</a>'},
+   {tag:'watch',title:'Watch: how the learning process works',meta:'A short, free intro to figure-drawing mindset from Love Life Drawing. <a href="https://www.lovelifedrawing.com/introduction-to-the-course/" target="_blank" rel="noopener">open →</a>'},
   ]},
  {focus:"Lines", title:"Superimposed lines",
   blurb:"Drawing from the shoulder, not the wrist. Today is about confident, ghosted strokes that don't wobble.",
@@ -498,16 +505,16 @@ CURRICULUM.push(
   blurb:"Ellipses are the other half of your vocabulary. Smooth and confident beats accurate-but-scratchy.",
   tasks:[ W("Half page ghosted lines + arcs."),
    dbox('1','Drawabox L1 — Tables of ellipses','Draw through each ellipse 2–3 times. Keep them snappy.'),
-   proko('Proko — sketchbooks, pencils & erasers','Materials episode; sets you up for the observation projects.') ]},
+   proko('Watch: drawing materials for beginners','What pens, pencils and paper to use, and why. Free tutorial.') ]},
  {focus:"Ellipses", title:"Ellipses in planes",
   blurb:"Now fit ellipses snugly inside the planes you drew. This is your first taste of constructing in space.",
   tasks:[ W("1 table of ellipses."),
    dbox('1','Drawabox L1 — Ellipses in planes','Touch all four sides of each plane.'),
    {tag:'main',title:'Funnels',meta:'Ellipses along a curved axis — keeps the minor axis aligned.'} ]},
- {focus:"Observation", title:"Proko project — draw a pear",
-  blurb:"Time to make a real drawing. Sounds trivial; Proko promises it'll challenge you. Pure observation.",
+ {focus:"Observation", title:"Observation project — draw a simple object",
+  blurb:"Time to make a real drawing. Pick something simple — a pear, a mug, an egg. It sounds trivial; it isn't. Pure observation.",
   tasks:[ W("1 table of ellipses + half page lines."),
-   proko('Proko — first project: simplified pear (Level 1)','Draw a pear or simple object from observation. Look more than you draw.'),
+   proko('Draw one simple object from life','Look far more than you draw. Free guidance on observational drawing.'),
    {tag:'main',title:'Compare, don\'t fix',meta:'Hold your drawing next to the subject. Note what\'s off — don\'t erase, just learn.'} ]},
  // Week 2
  {focus:"Boxes", title:"Rough perspective",
@@ -525,10 +532,10 @@ CURRICULUM.push(
   tasks:[ W("Lines + ellipses."),
    dbox('1','Drawabox L1 — Organic perspective','Ribbons of boxes flowing through the scene, overlapping.'),
    {tag:'main',title:'Vary size & angle',meta:'Bigger = closer. Let them tumble naturally.'} ]},
- {focus:"Observation", title:"Proko — observation again",
+ {focus:"Observation", title:"Observation — a second object",
   blurb:"Second real drawing. A different simple object. You should already feel your lines getting calmer.",
   tasks:[ W("1 page mixed L1 exercises."),
-   proko('Proko Drawing Basics — next observation lesson','Draw a new simple object from life.'),
+   proko('Draw a new simple object from life','Free observational-drawing guidance.'),
    {tag:'main',title:'Negative space check',meta:'Glance at the shapes between/around the object to catch proportion errors.'} ]},
  {focus:"Recovery", title:"Light day — free play",
   blurb:"A deliberately easy day. Drawabox warns against burnout: play is allowed, and it rebuilds motivation.",
@@ -549,15 +556,15 @@ CURRICULUM.push(
   blurb:"Keep checking your line extensions. You'll start to see your error shrink across the set.",
   tasks:[ W("Warm-up incl. a couple of rotated-box rows."),
    {tag:'main',title:'Boxes 9–18',meta:'Vary your rates of foreshortening — shallow and dramatic.'},
-   proko('Proko — line confidence / line weight (free clip)','Short watch to reinforce confident edges.') ]},
+   proko('Watch: confident line-making','A short free watch to reinforce confident, committed edges.') ]},
  {focus:"Box challenge", title:"250 Boxes — 19–28",
-  blurb:"Halfway feeling like a grind? That's normal. Lean on the Proko project days for morale.",
+  blurb:"Halfway feeling like a grind? That's normal. Lean on the observation days for morale.",
   tasks:[ W("5 min mixed."),
    {tag:'main',title:'Boxes 19–28',meta:'Colour-code your three sets of parallel lines if it helps you see convergence.'} ]},
- {focus:"Observation", title:"Proko — value & light intro",
+ {focus:"Observation", title:"Value & light — intro",
   blurb:"Break from boxes. Start learning how form turns in light — the skill that lets you judge lighting in a plate.",
   tasks:[ W("Lines + ellipses."),
-   proko('Proko Drawing Basics — shading / light & shadow intro','How light reveals 3D form: light, shadow, core shadow, reflected light.'),
+   proko('Watch: light & shadow on simple form','How light reveals 3D form — light, core shadow, reflected light. Free tutorial.'),
    {tag:'main',title:'One sphere, shaded',meta:'Apply what you watched to a single sphere from a clear light source.'} ]},
  {focus:"Box challenge", title:"250 Boxes — 29–40",
   blurb:"Push through. Each box is quietly rewiring how you see edges and depth.",
@@ -577,7 +584,7 @@ for (let i=0;i<6;i++){ // week 4
    blurb:"Phase 2 is the spatial core. Grind the box challenge as your main work; keep it ~10/day.",
    tasks:[ W("Lines, ellipses, a few rotated boxes."),
     {tag:'main',title:`Boxes ${56+i*10}–${65+i*10}`,meta:'Line extensions every box. Watch your convergence error shrink.'},
-    (i%2===0)? proko('Proko Drawing Basics — next lesson','Watch one short lesson on form or simplification.')
+    (i%2===0)? proko('Watch: a short form/simplification lesson','Free tutorial on simplifying what you see into forms.')
              : {tag:'main',title:'10-min observation sketch',meta:'Any object on your desk. Construct it from boxes/cylinders first.'} ]});
 }
 // week 5 — finish boxes, start L2
@@ -601,12 +608,12 @@ p2.push({focus:"Texture", title:"L2 — texture & dissections",
   tasks:[ W("Boxes + organic forms."),
    dbox('2','Drawabox L2 — Texture analysis & dissections','Study real textures; render with shadow shapes, not scribbles.'),
    {tag:'main',title:'Less is more',meta:'Imply the texture at the focal edge, let the rest breathe.'} ]});
-p2.push({focus:"Observation", title:"Proko — bigger observation piece",
-  blurb:"Apply L2 thinking to a real object with some texture. Construct first, render second.",
+p2.push({focus:"Observation", title:"A bigger observation piece",
+  blurb:"Apply Lesson 2 thinking to a real object with some texture. Construct first, render second.",
   tasks:[ W("Boxes + organic forms."),
-   proko('Proko Drawing Basics — observation/shading lesson','Pick a textured object (fruit, fabric, bark).'),
+   proko('Draw a textured object from life','Pick fruit, fabric or bark. Free observational guidance.'),
    {tag:'main',title:'Shadow shapes first',meta:'Block the big shadow shape before any detail.'} ]});
-// week 6 — L2 form intersections + submit, more proko
+// week 6 — L2 form intersections + submit
 p2.push({focus:"Construction", title:"L2 — form intersections",
   blurb:"Where boxes, spheres and cylinders overlap and you draw the intersection line. Hard, and hugely useful for combining shapes.",
   tasks:[ W("Boxes + organic forms."),
@@ -625,10 +632,10 @@ p2.push({focus:"Recovery", title:"Light day — draw for joy",
   blurb:"Mid-course reset. Drawabox is a slog by design; finishing a fun drawing is the fuel that keeps you going.",
   tasks:[ W("Just warm up if you like."),
    {tag:'main',title:'Draw something you actually want to',meta:'A character, a plant, your motorbike — anything. Apply construction loosely, have fun.'} ]});
-p2.push({focus:"Observation", title:"Proko — light & shadow deeper",
+p2.push({focus:"Observation", title:"Light & shadow — deeper",
   blurb:"Go further into the elements of shading now that you can construct solid forms.",
   tasks:[ W("Boxes + forms."),
-   proko('Proko Drawing Basics — full shading lesson','Core shadow, occlusion shadow, halftones, highlight, reflected light.'),
+   proko('Watch: the elements of shading','Core shadow, occlusion shadow, halftones, highlight, reflected light. Free tutorial.'),
    {tag:'main',title:'Shade a stack of forms',meta:'Apply the full shading vocabulary to a box + sphere + cylinder.'} ]});
 p2.push({focus:"Checkpoint", title:"Phase 2 checkpoint",
   blurb:"End of the spatial core. You can now build and shade believable 3D forms — the foundation of reading any image.",
@@ -642,22 +649,22 @@ const p3 = [];
 const p3topics = [
   ["Drawabox L3 — plant construction intro","Plants are where spatial reasoning is tackled in earnest. Construct leaves from a central flow line + edge detail."],
   ["L3 — leaves","Draw leaves: flow line first, then the envelope, then edge detailing. Construction discipline."],
-  ["Proko — value scales & edges","Practise a clean value scale and hard/soft edge control."],
+  ["WATCH: value scales & edges","Practise a clean value scale and hard/soft edge control. Free tutorial."],
   ["L3 — branches","Segment-by-segment branch construction; ellipses where segments overlap."],
   ["L3 — flowers / potted plant","Combine leaves, branches and stems into one constructed plant."],
-  ["Proko — observation: a plant from life","Draw a real plant. Construct, then shade with your value vocabulary."],
+  ["WATCH: drawing a plant from life","Draw a real plant. Construct, then shade with your value vocabulary."],
 ];
 for (let wk=0; wk<3; wk++){
   for (let d=0; d<6; d++){
     const t = p3topics[(wk*2 + d) % p3topics.length];
-    const isProko = t[0].startsWith("Proko");
+    const isWatch = t[0].startsWith("WATCH:");
     p3.push({
-      focus: isProko ? "Observation" : (d===5?"Submit":"Construction"),
-      title: t[0].replace("Drawabox ","").replace("L3 — ",""),
+      focus: isWatch ? "Observation" : (d===5?"Submit":"Construction"),
+      title: t[0].replace("Drawabox ","").replace("L3 — ","").replace("WATCH: ",""),
       blurb: t[1] + (wk===2 && d===5 ? " End of Phase 3 — compile Lesson 3 and post for critique." : ""),
       tasks:[
         W("Boxes + organic forms + a couple of ellipse tables."),
-        isProko ? proko(t[0], "Watch, then immediately apply it to one drawing.")
+        isWatch ? proko(t[0].replace("WATCH: ",""), "Watch, then immediately apply it to one drawing. Free.")
                 : dbox('3', t[0], "Flow line → simple envelope → construction → detail."),
         (wk===2 && d===5)
           ? {tag:'main',title:'Submit Lesson 3 homework',meta:'Post your plant constructions for free critique.'}
@@ -673,21 +680,21 @@ const p4 = [];
 const p4topics = [
   ["Drawabox L4 — insect/animal construction","Lesson 4: build complex subjects from simple 3D primitives — exactly how you'd block a set extension."],
   ["L4 — masses & sausage method","Add organic masses onto a base form; respect how they wrap the underlying volume."],
-  ["Proko — Figure Drawing intro: gesture","Optional figure track. Gesture first: the flowing line of action before any structure."],
+  ["WATCH: figure intro — gesture","Optional figure track. Gesture first: the flowing line of action before any structure."],
   ["L4 — detail & texture pass","Apply Lesson-2 texture restraint to a constructed animal at the focal point."],
-  ["Proko — the bean & robo-bean","Ribcage + pelvis as two masses (the 'bean'), then box them up (robo-bean)."],
+  ["WATCH: the bean & robo-bean","Ribcage + pelvis as two masses (the 'bean'), then box them up (robo-bean)."],
   ["Drawabox L5 — animal construction","Lesson 5: larger animals. Full construction pipeline, head to ground shadow."],
 ];
 for (let wk=0; wk<3; wk++){
   for (let d=0; d<6; d++){
     const idx = (wk*2 + d) % p4topics.length;
     const t = p4topics[idx];
-    const isProko = t[0].startsWith("Proko");
+    const isWatch = t[0].startsWith("WATCH:");
     const lessonNum = t[0].includes("L5") ? '5' : '4';
     const finale = (wk===2 && d===5);
     p4.push({
-      focus: finale ? "Graduation" : (isProko ? "Figure" : (d===5?"Submit":"Construction")),
-      title: finale ? "Stage 1 complete — the foundations are yours" : t[0].replace("Drawabox ","").replace(/L[45] — /,""),
+      focus: finale ? "Graduation" : (isWatch ? "Figure" : (d===5?"Submit":"Construction")),
+      title: finale ? "Stage 1 complete — the foundations are yours" : t[0].replace("Drawabox ","").replace(/L[45] — /,"").replace("WATCH: ",""),
       blurb: finale
         ? "You've gone from wobbly lines to constructing complex subjects in believable 3D space — the hardest part of the whole journey. That eye for form and structure is exactly what a strong Flame artist runs on. Stage 2 is next: now you start drawing people, and working digitally."
         : t[1],
@@ -698,7 +705,7 @@ for (let wk=0; wk<3; wk++){
         {tag:'main',title:'Onward to Stage 2',meta:'Tomorrow you start drawing people — gesture, the figure, and your first digital sessions.'}
       ] : [
         W("Boxes + forms + ellipses."),
-        isProko ? proko(t[0], "Watch then apply immediately.")
+        isWatch ? prokoFig(t[0].replace("WATCH: ",""), "Watch then apply immediately. Free.")
                 : dbox(lessonNum, t[0], "Major forms first, detail last."),
         (d===5)
           ? {tag:'main',title:'Compile & submit homework',meta:'Post your latest constructions for critique.'}
@@ -713,29 +720,28 @@ CURRICULUM.push(...p4);
 //  STAGE 2 — Weeks 13–24 : DRAWING REAL THINGS
 //  People (figure + portrait), observational construction,
 //  and the move onto the tablet for digital.
-//  Resources: Proko Figure Drawing Fundamentals (free intro),
-//  Proko Portrait basics, Drawabox L6–7, Ctrl+Paint.
+//  Resources: Love Life Drawing (free figure/gesture/portrait),
+//  free Proko YouTube where clearest, Drawabox L6–7, Ctrl+Paint.
 // ============================================================
 const ctrlpaint = (label, meta) => ({tag:'watch', title:label, meta:`${meta} <a href="https://www.ctrlpaint.com/library" target="_blank" rel="noopener">Ctrl+Paint library →</a>`});
-const prokoFig = (label, meta) => ({tag:'watch', title:label, meta:`${meta} <a href="https://www.youtube.com/watch?v=rNiBjHymU0k" target="_blank" rel="noopener">Proko Figure →</a>`});
 
 const stage2topics = [
   // Phase 5 — Gesture (wk 13–15)
-  [["Figure","Proko Figure — Introduction & gesture",
+  [["Figure","Figure — introduction & gesture",
     "Stage 2 begins: drawing people. Everything in the figure starts with gesture — the flowing line of action, captured fast before any structure.",
-    [prokoFig('Proko Figure Drawing — gesture','The rhythm & line of action. Do 30-second gesture sketches.'),
+    [prokoFig('Watch: beginner gesture drawing','The rhythm & line of action. Do 30-second gesture sketches. Free.'),
      {tag:'main',title:'10 × 30-second gestures',meta:'Speed over accuracy. Capture the flow, not the outline.'}]],
    ["Figure","Gesture — flow & rhythm",
     "More gesture. You're training your hand to find the big sweeping motion of a pose in seconds.",
-    [prokoFig('Proko Figure — rhythm of the body','Chains of curves flowing through the figure.'),
+    [prokoFig('Watch: rhythm & flow in the figure','Chains of curves flowing through the figure. Free.'),
      {tag:'main',title:'1 page of 1-minute poses',meta:'Use free pose libraries (e.g. line-of-action.com).'}]],
    ["Figure","The Bean",
-    "Proko's 'bean' — ribcage and pelvis as two simple masses that twist and tilt against each other. The core of believable posture.",
-    [prokoFig('Proko Figure — the Bean','Two masses, the gesture between them, the twist.'),
+    "The 'bean' — ribcage and pelvis as two simple masses that twist and tilt against each other. The core of believable posture.",
+    [prokoFig('Watch: the ribcage & pelvis masses','Two masses, the gesture between them, the twist. Free.'),
      {tag:'main',title:'Draw 8 beans from poses',meta:'Find the tilt of chest vs hips in each.'}]],
    ["Figure","Robo-bean",
     "Box up the bean — turn the two soft masses into solid 3D blocks so you can see them turn in space.",
-    [prokoFig('Proko Figure — Robo-bean','Convert the bean into boxy 3D forms.'),
+    [prokoFig('Watch: turning the masses into 3D forms','Convert the bean into boxy 3D forms. Free.'),
      {tag:'main',title:'Robo-bean over your gestures',meta:'Keep the gesture underneath; the structure sits on top.'}]],
    ["Digital","Ctrl+Paint — getting onto the tablet",
     "First digital day. Directly useful for your Flame work. Just learn the tool — brushes, strokes, undo.",
@@ -743,16 +749,16 @@ const stage2topics = [
      {tag:'main',title:'Repeat L1 lines & ellipses, digitally',meta:'Your fundamentals, now on the tablet. Notice what feels different.'}]],
    ["Submit","Gesture checkpoint",
     "End of the gesture block. Compare your day-1 gestures to today — looser, faster, more alive.",
-    [prokoFig('Optional: post gestures for feedback','Proko community or Reddit.'),
+    [{tag:'main',title:'Optional: post gestures for feedback',meta:'Share to a free community like the Drawabox or r/learnart subreddits.'},
      {tag:'main',title:'1 page gestures + 1 page beans',meta:'Your warm-up now includes gesture forever.'}]]],
   // Phase 6 — Structure & proportion (wk 16–18)
   [["Figure","Mannequinization",
     "Turn the robo-bean into a simple mannequin — adding limbs as cylinders and boxes. The full simplified figure.",
-    [prokoFig('Proko Figure — mannequinization','Limbs as simple forms attached to the bean.'),
+    [prokoFig('Watch: building the mannequin','Limbs as simple forms attached to the bean. Free.'),
      {tag:'main',title:'3 mannequins from poses',meta:'Gesture → bean → robo-bean → limbs.'}]],
    ["Figure","Proportions of the figure",
     "How many heads tall, where the landmarks sit. A measuring framework so figures stop looking 'off'.",
-    [prokoFig('Proko Figure — proportions','The 7.5–8 head canon and key landmarks.'),
+    [prokoFig('Watch: figure proportions','The 7.5–8 head canon and key landmarks. Free.'),
      {tag:'main',title:'One measured standing figure',meta:'Mark the landmarks before drawing.'}]],
    ["Construction","Drawabox L6 — drawing everyday objects",
     "Back to Drawabox: constructing real man-made objects with precision. Sharpens the box skills for hard-surface accuracy.",
@@ -764,24 +770,24 @@ const stage2topics = [
      {tag:'main',title:'3 greyscale value thumbnails',meta:'Squint at a photo, block 3 values only.'}]],
    ["Figure","Combining gesture + structure",
     "The whole pipeline in one drawing: feel the gesture, build the mannequin on it. This is figure drawing.",
-    [prokoFig('Proko Figure — putting it together','Gesture underneath, structure on top.'),
+    [prokoFig('Watch: gesture + structure together','Gesture underneath, structure on top. Free.'),
      {tag:'main',title:'2 full mannequin figures',meta:'2–3 min each. Don\'t lose the gesture.'}]],
    ["Submit","Figure checkpoint",
     "End of Phase 6. You can rough out a believable, posed human figure from simple forms.",
     [{tag:'main',title:'Best figure of the week',meta:'Keep it. You\'ll compare in 12 weeks.'},
      {tag:'main',title:'Reflection',meta:'Figures are the hardest thing most beginners attempt — and you\'re doing it.'}]]],
   // Phase 7 — The head & portrait (wk 19–21)
-  [["Portrait","Proko — the Loomis head",
+  [["Portrait","The Loomis head",
     "Heads now. The Loomis method: a ball + carved planes that lets you draw a head from any angle.",
-    [{tag:'watch',title:'Proko — how to draw the head (Loomis)',meta:'Ball, side planes, jaw. <a href="https://www.proko.com/course/portrait-drawing-fundamentals" target="_blank" rel="noopener">Proko Portrait →</a>'},
+    [{tag:'watch',title:'Watch: how to draw the head (Loomis method)',meta:'Ball, side planes, jaw. Proko\'s free YouTube head series is the landmark explainer. <a href="https://www.youtube.com/proko" target="_blank" rel="noopener">Proko on YouTube →</a>'},
      {tag:'main',title:'4 heads, different angles',meta:'Construct the ball + plane each time.'}]],
    ["Portrait","Features — the eye & nose",
     "Constructing facial features as 3D forms, not flat symbols.",
-    [{tag:'watch',title:'Proko — eyes & nose',meta:'The eye as a ball in a socket; the nose as a wedge. <a href="https://www.proko.com/course/portrait-drawing-fundamentals" target="_blank" rel="noopener">Proko →</a>'},
+    [{tag:'watch',title:'Watch: drawing the eye & nose',meta:'The eye as a ball in a socket; the nose as a wedge. Free on Proko\'s YouTube. <a href="https://www.youtube.com/proko" target="_blank" rel="noopener">Proko on YouTube →</a>'},
      {tag:'main',title:'Fill a page with eyes & noses',meta:'From reference. Form first.'}]],
    ["Portrait","Features — mouth & ear",
     "The remaining features, and how they sit on the curved surface of the head.",
-    [{tag:'watch',title:'Proko — mouth & ear',meta:'Lips as forms on a cylinder; ear placement. <a href="https://www.proko.com/course/portrait-drawing-fundamentals" target="_blank" rel="noopener">Proko →</a>'},
+    [{tag:'watch',title:'Watch: drawing the mouth & ear',meta:'Lips as forms on a cylinder; ear placement. Free on Proko\'s YouTube. <a href="https://www.youtube.com/proko" target="_blank" rel="noopener">Proko on YouTube →</a>'},
      {tag:'main',title:'Page of mouths & ears',meta:'Wrap them onto the head\'s curve.'}]],
    ["Portrait","Portrait from reference",
     "Put the head together: construct, place features, then a light shading pass using your Stage 1 value skills.",
@@ -841,7 +847,7 @@ const stage3 = [
   [["Perspective","1-point perspective in depth",
     "Stage 3: control. Real perspective study now — starting with one-point: rooms, corridors, a single vanishing point.",
     [{tag:'main',title:'Draw an interior in 1-point',meta:'Floor grid, objects receding to one VP.'},
-     {tag:'watch',title:'Proko — The Perspective Course (free clips)',meta:'<a href="https://www.proko.com/course/the-perspective-course" target="_blank" rel="noopener">Proko Perspective →</a>'}]],
+     {tag:'watch',title:'Watch: perspective basics',meta:'How parallel lines converge to vanishing points. Free guide. <a href="https://www.lovelifedrawing.com/tutorials/" target="_blank" rel="noopener">Love Life Drawing →</a>'}]],
    ["Perspective","2-point perspective",
     "The workhorse of environment drawing. Two vanishing points — buildings, boxes seen from a corner.",
     [{tag:'main',title:'A street corner / building in 2-point',meta:'Two VPs on the horizon, verticals true.'},
@@ -865,19 +871,19 @@ const stage3 = [
   // Phase 10 — Anatomy building blocks (wk 28–30)
   [["Anatomy","Anatomy — the torso",
     "Anatomy as simple masses, not memorised muscles. The torso: ribcage, pelvis, the muscles that bridge them.",
-    [prokoFig('Proko Figure — torso anatomy','Major masses of the trunk.'),
+    [prokoFig('Watch: torso anatomy (simple masses)','Major masses of the trunk. Free.'),
      {tag:'main',title:'Construct 3 torsos',meta:'Build on the bean; add the big forms.'}]],
    ["Anatomy","Anatomy — arms",
     "The arm's masses and how they twist. Enough to draw a believable arm, not a textbook.",
-    [prokoFig('Proko Figure — arm anatomy','Upper arm, forearm, the twist.'),
+    [prokoFig('Watch: arm anatomy (simple masses)','Upper arm, forearm, the twist. Free.'),
      {tag:'main',title:'Page of arms in poses',meta:'Simple forms, correct attachment.'}]],
    ["Anatomy","Anatomy — legs",
     "The leg's masses and rhythms. The biggest forms in the body.",
-    [prokoFig('Proko Figure — leg anatomy','Thigh, calf, the rhythm.'),
+    [prokoFig('Watch: leg anatomy (simple masses)','Thigh, calf, the rhythm. Free.'),
      {tag:'main',title:'Page of legs in poses',meta:'Watch the front/back rhythm.'}]],
    ["Anatomy","Hands & feet",
     "The dreaded hands. Construct them as a boxy mitten mass first, fingers second.",
-    [prokoFig('Proko Figure — hands & feet','Block the mass before the digits.'),
+    [prokoFig('Watch: hands & feet','Block the mass before the digits. Free.'),
      {tag:'main',title:'A page of hands',meta:'From your own hand in a mirror.'}]],
    ["Anatomy","Full figure with anatomy",
     "Bring the anatomy together on a full posed figure built on your gesture + bean foundation.",
@@ -890,7 +896,7 @@ const stage3 = [
   // Phase 11 — Light & value mastery (wk 31–33)
   [["Light","The logic of light",
     "Phase 11: light in earnest. Why a form looks the way it does under a given light — the skill that lets you judge any plate.",
-    [{tag:'watch',title:'Proko — light & form review',meta:'Form principle, cast vs form shadow.'},
+    [{tag:'watch',title:'Watch: light & form review',meta:'Form principle, cast vs form shadow. Free tutorial.'},
      {tag:'main',title:'Light one object 3 ways',meta:'Same object, three light directions.'}]],
    ["Light","Edges — hard, soft, lost",
     "Edge control is what separates flat from photographic. Where edges sharpen and where they dissolve.",
