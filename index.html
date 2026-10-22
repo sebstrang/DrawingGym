@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Drawing Gym</title>
+<title>Ricci</title>
 <style>
   /* ---------- Design tokens ----------
      Concept: a fineliner sketchbook. Drawabox demands ink (no erasing) —
@@ -364,8 +364,8 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Six days a week &middot; Drawabox, Proko &amp; Love Life Drawing</div>
-    <h1>The Drawing<br>Gym<span class="ink-drop">.</span></h1>
+    <div class="eyebrow">Drawing practice &middot; six days a week</div>
+    <h1>Ricci<span class="ink-drop">.</span></h1>
     <p class="tagline">One session a day. No grinding, no chasing pretty pictures &mdash; just the reps that build a real eye and a confident hand.</p>
   </header>
 
@@ -425,7 +425,7 @@
   </div>
 
   <footer>
-    Built around free resources: <strong>Drawabox</strong> (drawabox.com) for spatial reasoning &amp; ink mark-making, <strong>Love Life Drawing</strong> (lovelifedrawing.com) for figure, gesture &amp; portrait, and <strong>Ctrl+Paint</strong> (ctrlpaint.com) for digital — with the occasional free Proko YouTube video where it's the clearest explanation. Everything linked is free. A 24-week course in four stages, six sessions a week. Tools: a fineliner pen and cheap paper to start; a tablet from Stage 2.
+    Built around free resources: <strong>Drawabox</strong> (drawabox.com) for spatial reasoning &amp; ink mark-making, <strong>Love Life Drawing</strong> (lovelifedrawing.com) for figure, gesture &amp; portrait, and <strong>Ctrl+Paint</strong> (ctrlpaint.com) for digital — with the occasional free Proko YouTube video where it's the clearest explanation. Everything linked is free. A 24-week course in four stages, six sessions a week. Tools: a fineliner pen and cheap paper to start; a tablet from Stage 2. Named for Sebastiano Ricci (1659–1734), a Venetian painter whose brushwork was quick and sure.
     <br><br>
     <button class="reset-link" id="resetBtn">Reset all progress</button>
   </footer>
@@ -1623,7 +1623,7 @@ async function doRestore(){
   if (!raw){ showMsg('Paste a backup code into the box first.', 'err'); return; }
   let parsed;
   try {
-    if (!raw.startsWith('DG1:')) throw new Error('not a Drawing Gym code');
+    if (!raw.startsWith('DG1:')) throw new Error('not a Ricci backup code');
     const json = decodeURIComponent(escape(atob(raw.slice(4))));
     parsed = JSON.parse(json);
     if (parsed._app !== 'drawingGym' || !parsed.state) throw new Error('wrong contents');
