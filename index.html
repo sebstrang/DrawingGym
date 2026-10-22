@@ -236,7 +236,7 @@
     padding-top: 0; padding-bottom: 0;
   }
   .done-stamp.show { opacity: 1; max-height: 120px; padding: 12px; }
-  .done-stamp small { display:block; font-family: var(--serif); font-weight:400; font-style:italic; letter-spacing:0; text-transform:none; color: var(--ink-soft); font-size:13px; margin-top:6px; }
+  .done-stamp small { display:block; font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; font-weight:400; font-style:italic; letter-spacing:0; text-transform:none; color: var(--ink-soft); font-size:13px; margin-top:6px; }
 
   /* ---------- Controls ---------- */
   .controls {
@@ -364,7 +364,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Daily practice &middot; Drawabox + Love Life Drawing</div>
+    <div class="eyebrow">Six days a week &middot; Drawabox, Proko &amp; Love Life Drawing</div>
     <h1>The Drawing<br>Gym<span class="ink-drop">.</span></h1>
     <p class="tagline">One session a day. No grinding, no chasing pretty pictures &mdash; just the reps that build a real eye and a confident hand.</p>
   </header>
@@ -391,7 +391,7 @@
   </div>
 
   <div class="map">
-    <h3>The 48-week arc · 4 stages</h3>
+    <h3>The 24-week arc · 4 stages</h3>
     <div id="phaseMap"></div>
   </div>
 
@@ -425,7 +425,7 @@
   </div>
 
   <footer>
-    Built around free resources: <strong>Drawabox</strong> (drawabox.com) for spatial reasoning &amp; ink mark-making, <strong>Love Life Drawing</strong> (lovelifedrawing.com) for figure, gesture &amp; portrait, and <strong>Ctrl+Paint</strong> (ctrlpaint.com) for digital — with the occasional free Proko YouTube video where it's the clearest explanation. Everything linked is free. A 48-week course in four stages. Tools: a fineliner pen + cheap paper to start; a tablet from Stage 2.
+    Built around free resources: <strong>Drawabox</strong> (drawabox.com) for spatial reasoning &amp; ink mark-making, <strong>Love Life Drawing</strong> (lovelifedrawing.com) for figure, gesture &amp; portrait, and <strong>Ctrl+Paint</strong> (ctrlpaint.com) for digital — with the occasional free Proko YouTube video where it's the clearest explanation. Everything linked is free. A 24-week course in four stages, six sessions a week. Tools: a fineliner pen and cheap paper to start; a tablet from Stage 2.
     <br><br>
     <button class="reset-link" id="resetBtn">Reset all progress</button>
   </footer>
@@ -433,628 +433,778 @@
 
 <script>
 // ============================================================
-//  CURRICULUM  — 72 sessions, 6 days/week × 12 weeks
+//  CURRICULUM  — 143 sessions, 6 days a week, 24 weeks
 //  Each session: { focus, title, blurb, tasks[] }
 //  task: { tag:'warmup'|'main'|'watch', title, meta }
+//
+//  Progress is saved by session INDEX (doneSessions, checks), so the
+//  order and count of sessions must not change without a migration.
+//  Change what a session says freely; never insert or remove one.
 // ============================================================
 
-// 16 phases, grouped into 4 twelve-week stages.
+// 16 phases. Stage 1 phases are three weeks each; from Stage 2 on a phase is one week.
 const PHASES = [
   { no:1,  name:"Mechanics & Confidence",      weeks:"Wk 1–3"   },
   { no:2,  name:"Boxes & the Spatial Core",    weeks:"Wk 4–6"   },
   { no:3,  name:"Form, Observation & Shading", weeks:"Wk 7–9"   },
   { no:4,  name:"Construction & Applying It",  weeks:"Wk 10–12" },
-  { no:5,  name:"Gesture",                     weeks:"Wk 13–15" },
-  { no:6,  name:"Structure & Proportion",      weeks:"Wk 16–18" },
-  { no:7,  name:"The Head & Portrait",         weeks:"Wk 19–21" },
-  { no:8,  name:"Synthesis",                   weeks:"Wk 22–24" },
-  { no:9,  name:"Perspective",                 weeks:"Wk 25–27" },
-  { no:10, name:"Anatomy Building Blocks",     weeks:"Wk 28–30" },
-  { no:11, name:"Light & Value Mastery",       weeks:"Wk 31–33" },
-  { no:12, name:"Integration",                 weeks:"Wk 34–36" },
-  { no:13, name:"Composition",                 weeks:"Wk 37–39" },
-  { no:14, name:"From Imagination",            weeks:"Wk 40–42" },
-  { no:15, name:"Personal Projects",           weeks:"Wk 43–45" },
-  { no:16, name:"Mastery & Momentum",          weeks:"Wk 46–48" },
+  { no:5,  name:"Gesture",                     weeks:"Wk 13"    },
+  { no:6,  name:"Structure & Proportion",      weeks:"Wk 14"    },
+  { no:7,  name:"The Head & Portrait",         weeks:"Wk 15"    },
+  { no:8,  name:"Synthesis",                   weeks:"Wk 16"    },
+  { no:9,  name:"Perspective",                 weeks:"Wk 17"    },
+  { no:10, name:"Anatomy Building Blocks",     weeks:"Wk 18"    },
+  { no:11, name:"Light & Value",               weeks:"Wk 19"    },
+  { no:12, name:"Integration",                 weeks:"Wk 20"    },
+  { no:13, name:"Composition",                 weeks:"Wk 21"    },
+  { no:14, name:"From Imagination",            weeks:"Wk 22"    },
+  { no:15, name:"A Personal Project",          weeks:"Wk 23"    },
+  { no:16, name:"Momentum",                    weeks:"Wk 24"    },
 ];
 
-// Four 12-week stages for the high-level map.
+// Four stages for the high-level map.
 const STAGES = [
-  { no:1, name:"Foundations",        weeks:"Weeks 1–12",  sub:"Confidence, lines, form, construction" },
-  { no:2, name:"Drawing Real Things",weeks:"Weeks 13–24", sub:"Figure, portrait, going digital" },
-  { no:3, name:"Depth & Control",    weeks:"Weeks 25–36", sub:"Perspective, anatomy, light" },
-  { no:4, name:"Bringing It Together",weeks:"Weeks 37–48", sub:"Composition, imagination, projects" },
+  { no:1, name:"Foundations",         weeks:"Weeks 1–12",  sub:"Confidence, lines, form, construction" },
+  { no:2, name:"Drawing Real Things", weeks:"Weeks 13–16", sub:"Figure, portrait, going digital" },
+  { no:3, name:"Depth & Control",     weeks:"Weeks 17–20", sub:"Perspective, anatomy, light" },
+  { no:4, name:"Bringing It Together",weeks:"Weeks 21–24", sub:"Composition, imagination, a project" },
 ];
 
-// reusable warm-up task
-const W = (txt) => ({ tag:'warmup', title:'Warm-up (3–5 min)', meta: txt });
+// ---------- link helpers — every destination is free ----------
+const link = (url, text) => `<a href="${url}" target="_blank" rel="noopener">${text} →</a>`;
+const DB = "https://drawabox.com/lesson/";
+// Drawabox pages, by the page that actually teaches the thing.
+const dbox  = (path, title, meta, text) => ({ tag:'main',  title, meta: `${meta} ${link(DB + path, text || "open on Drawabox")}` });
+const yt    = (id, title, meta, text)   => ({ tag:'watch', title, meta: `${meta} ${link("https://www.youtube.com/watch?v=" + id, text || "watch on YouTube")}` });
+const lld   = (path, title, meta, text) => ({ tag:'watch', title, meta: `${meta} ${link("https://www.lovelifedrawing.com/" + path, text || "Love Life Drawing")}` });
+const cp    = (path, title, meta, text) => ({ tag:'watch', title, meta: `${meta} ${link("https://www.ctrlpaint.com/" + path, text || "Ctrl+Paint")}` });
+const T     = (title, meta) => ({ tag:'main', title, meta });
+const W     = (txt) => ({ tag:'warmup', title:'Warm-up (3–5 min)', meta: txt });
+const S     = (focus, title, blurb, tasks) => ({ focus, title, blurb, tasks });
+const POSES = link("https://line-of-action.com/", "free timed poses at Line of Action");
 
-// Helpers for task links. All destinations are free.
-const dbox = (lesson, label, meta) => ({ tag:'main', title:label, meta:`${meta} <a href="https://drawabox.com/lesson/${lesson}" target="_blank" rel="noopener">open lesson →</a>` });
-// Generic free-resource watch task. Pass a label, meta, and a full URL + link text.
-const watch = (label, meta, url, linkText) => ({ tag:'watch', title:label, meta:`${meta} <a href="${url}" target="_blank" rel="noopener">${linkText} →</a>` });
-// Love Life Drawing — fully free figure/gesture/portrait teaching (site + YouTube).
-const lld = (label, meta, path) => watch(label, meta, 'https://www.lovelifedrawing.com'+(path||'/tutorials/'), 'Love Life Drawing');
-// Stage 1 observation/shading days: kept free via Love Life Drawing foundational tutorials.
-const proko = (label, meta) => lld(label, meta, '/tutorials/');
-// Figure-specific helper used in Stages 2–3.
-const prokoFig = (label, meta) => lld(label, meta, '/gesture-series/');
+// The 250 Box Challenge runs through weeks 3–6, about 13 boxes a session,
+// with the lighter observation days carrying five as a warm-up.
+const BOXPAGE = (n) => n <= 50 ? "250boxes/2" : n <= 100 ? "250boxes/3" : "250boxes/4";
+const boxes = (from, to, note) => dbox(BOXPAGE(to), `Boxes ${from}–${to}`, note, "the challenge page");
+const boxDay = (from, to, title, blurb, note, extra) => S("Box challenge", `250 Boxes — ${from}–${to}${title ? " · " + title : ""}`, blurb,
+  [ W("Lines and ellipses, then a rotated-box row."), boxes(from, to, note), extra ].filter(Boolean));
 
 const CURRICULUM = [];
 
+// ============================================================
+//  STAGE 1 — Weeks 1–12 : FOUNDATIONS  (Drawabox Lessons 0–5)
+// ============================================================
+
 // ---------- PHASE 1 : Weeks 1–3 (sessions 1–18) ----------
 CURRICULUM.push(
- {focus:"Read & set up", title:"Day 0 — Mindset & materials",
-  blurb:"No drawing today. Get your head right and your kit sorted. The whole course rests on one idea: for a beginner the finished drawing doesn't matter — the reps do.",
-  tasks:[
-   {tag:'main',title:'Read Drawabox Lesson 0',meta:'Getting Started + the "Changing your Mindset" page on play vs. results. <a href="https://drawabox.com/lesson/0" target="_blank" rel="noopener">open →</a>'},
-   {tag:'main',title:'Get your tools',meta:'A fineliner pen (Micron 03/05 or similar) + printer paper. Ink means no erasing — it forces you to commit to each mark.'},
-   {tag:'watch',title:'Watch: how the learning process works',meta:'A short, free intro to figure-drawing mindset from Love Life Drawing. <a href="https://www.lovelifedrawing.com/introduction-to-the-course/" target="_blank" rel="noopener">open →</a>'},
-  ]},
- {focus:"Lines", title:"Superimposed lines",
-  blurb:"Drawing from the shoulder, not the wrist. Today is about confident, ghosted strokes that don't wobble.",
-  tasks:[ W("Skip today — first real session."),
-   dbox('1','Drawabox L1 — Superimposed lines','Fill a page of straight lines, then arcs. Fast, confident, from the shoulder.'),
-   {tag:'main',title:'Ghosted lines',meta:'Plant start & end dots, ghost the motion a few times, then commit in one stroke.'} ]},
- {focus:"Lines", title:"Ghosted lines & planes",
-  blurb:"Use the ghosting method on everything structural from now on. Accuracy comes second to confidence.",
-  tasks:[ W("1 page superimposed lines."),
-   dbox('1','Drawabox L1 — Ghosted planes','Draw boxes-as-planes, connect corners with ghosted lines.'),
-   {tag:'main',title:'No grinding',meta:'Do the recommended amount and stop. You\'ll keep practising these as warm-ups forever.'} ]},
- {focus:"Ellipses", title:"Tables of ellipses",
-  blurb:"Ellipses are the other half of your vocabulary. Smooth and confident beats accurate-but-scratchy.",
-  tasks:[ W("Half page ghosted lines + arcs."),
-   dbox('1','Drawabox L1 — Tables of ellipses','Draw through each ellipse 2–3 times. Keep them snappy.'),
-   proko('Watch: drawing materials for beginners','What pens, pencils and paper to use, and why. Free tutorial.') ]},
- {focus:"Ellipses", title:"Ellipses in planes",
-  blurb:"Now fit ellipses snugly inside the planes you drew. This is your first taste of constructing in space.",
-  tasks:[ W("1 table of ellipses."),
-   dbox('1','Drawabox L1 — Ellipses in planes','Touch all four sides of each plane.'),
-   {tag:'main',title:'Funnels',meta:'Ellipses along a curved axis — keeps the minor axis aligned.'} ]},
- {focus:"Observation", title:"Observation project — draw a simple object",
-  blurb:"Time to make a real drawing. Pick something simple — a pear, a mug, an egg. It sounds trivial; it isn't. Pure observation.",
-  tasks:[ W("1 table of ellipses + half page lines."),
-   proko('Draw one simple object from life','Look far more than you draw. Free guidance on observational drawing.'),
-   {tag:'main',title:'Compare, don\'t fix',meta:'Hold your drawing next to the subject. Note what\'s off — don\'t erase, just learn.'} ]},
- // Week 2
- {focus:"Boxes", title:"Rough perspective",
-  blurb:"Boxes are where spatial reasoning begins. Expect them to look wrong at first — that's the point.",
-  tasks:[ W("Lines + ellipses, 5 min."),
-   dbox('1','Drawabox L1 — Rough perspective','Boxes with edges receding to a single vanishing point.'),
-   {tag:'main',title:'Check with back-lines',meta:'Extend lines to see how far off your VP guesses were.'} ]},
- {focus:"Boxes", title:"Rotated boxes",
-  blurb:"The hardest L1 exercise. Don't expect to nail it — expect to wrestle with it. That wrestling is the learning.",
-  tasks:[ W("Ghosted lines + 1 ellipse table."),
-   dbox('1','Drawabox L1 — Rotated boxes','One big exercise: boxes rotating around a central point.'),
-   {tag:'main',title:'Keep gaps narrow & even',meta:'Use neighbouring boxes as reference for each new one.'} ]},
- {focus:"Boxes", title:"Organic perspective",
-  blurb:"Loose flowing boxes through space, growing and shrinking. The fun reward after rotated boxes.",
-  tasks:[ W("Lines + ellipses."),
-   dbox('1','Drawabox L1 — Organic perspective','Ribbons of boxes flowing through the scene, overlapping.'),
-   {tag:'main',title:'Vary size & angle',meta:'Bigger = closer. Let them tumble naturally.'} ]},
- {focus:"Observation", title:"Observation — a second object",
-  blurb:"Second real drawing. A different simple object. You should already feel your lines getting calmer.",
-  tasks:[ W("1 page mixed L1 exercises."),
-   proko('Draw a new simple object from life','Free observational-drawing guidance.'),
-   {tag:'main',title:'Negative space check',meta:'Glance at the shapes between/around the object to catch proportion errors.'} ]},
- {focus:"Recovery", title:"Light day — free play",
-  blurb:"A deliberately easy day. Drawabox warns against burnout: play is allowed, and it rebuilds motivation.",
-  tasks:[ W("Just warm up — that's the whole session if you want."),
-   {tag:'main',title:'Draw anything for fun',meta:'No rules. Doodle, copy something you like. Keep the streak alive without pressure.'} ]},
- {focus:"Submit", title:"Lesson 1 homework + critique",
-  blurb:"Assemble your best L1 pages and post them for free community critique. Feedback is how you improve fastest.",
-  tasks:[ W("5 min warm-up."),
-   dbox('1','Compile Drawabox L1 homework','Photograph your pages: lines, ellipses, boxes.'),
-   {tag:'main',title:'Post for free critique',meta:'Submit to the Drawabox community (Reddit thread linked on the lesson page).'} ]},
- // Week 3
- {focus:"Box challenge", title:"250 Box Challenge — begins",
-  blurb:"The single most VFX-relevant exercise in the course: it trains your brain to build objects in believable perspective. ~5–10 boxes per session for the next few weeks.",
-  tasks:[ W("Lines + ellipses, always."),
-   {tag:'main',title:'Boxes 1–8',meta:'Use the line-extension method to check convergence after each box. <a href="https://drawabox.com/lesson/250boxes" target="_blank" rel="noopener">challenge page →</a>'},
-   {tag:'main',title:'Don\'t binge',meta:'A handful per day, done well, beats 50 rushed.'} ]},
- {focus:"Box challenge", title:"250 Boxes — 9–18",
-  blurb:"Keep checking your line extensions. You'll start to see your error shrink across the set.",
-  tasks:[ W("Warm-up incl. a couple of rotated-box rows."),
-   {tag:'main',title:'Boxes 9–18',meta:'Vary your rates of foreshortening — shallow and dramatic.'},
-   proko('Watch: confident line-making','A short free watch to reinforce confident, committed edges.') ]},
- {focus:"Box challenge", title:"250 Boxes — 19–28",
-  blurb:"Halfway feeling like a grind? That's normal. Lean on the observation days for morale.",
-  tasks:[ W("5 min mixed."),
-   {tag:'main',title:'Boxes 19–28',meta:'Colour-code your three sets of parallel lines if it helps you see convergence.'} ]},
- {focus:"Observation", title:"Value & light — intro",
-  blurb:"Break from boxes. Start learning how form turns in light — the skill that lets you judge lighting in a plate.",
-  tasks:[ W("Lines + ellipses."),
-   proko('Watch: light & shadow on simple form','How light reveals 3D form — light, core shadow, reflected light. Free tutorial.'),
-   {tag:'main',title:'One sphere, shaded',meta:'Apply what you watched to a single sphere from a clear light source.'} ]},
- {focus:"Box challenge", title:"250 Boxes — 29–40",
-  blurb:"Push through. Each box is quietly rewiring how you see edges and depth.",
-  tasks:[ W("Warm-up."),
-   {tag:'main',title:'Boxes 29–40',meta:'Focus on clean, single-stroke ghosted lines even when tired.'} ]},
- {focus:"Box challenge", title:"250 Boxes — 41–55 & checkpoint",
-  blurb:"End of Phase 1. You've got confident lines, decent ellipses, and boxes that are starting to sit in real space.",
-  tasks:[ W("Warm-up."),
-   {tag:'main',title:'Boxes 41–55',meta:'Notice how much straighter your guess at the third VP has become.'},
-   {tag:'main',title:'Phase 1 reflection',meta:'Flip back to your day-2 lines. See the difference? That\'s the reps working.'} ]},
+ // Week 1 — Lesson 0 and the Lines & Ellipses of Lesson 1
+ S("Read & set up", "Day 0 — Mindset & materials",
+   "No drawing today. Get your head right and your kit sorted. The whole course rests on one idea: for a beginner the finished drawing doesn't matter — the reps do.",
+   [ dbox("0/1", "Read Drawabox Lesson 0", "The introduction, then the page that matters most: play versus results. Twenty minutes.", "Introduction"),
+     dbox("0/2", "Read: Changing your mindset", "Why half of every session is for drawing badly on purpose.", "Changing your Mindset"),
+     dbox("0/4", "Get your tools", "A fineliner (Micron 05 or similar) and printer paper. Ink means no erasing — it forces you to commit to each mark.", "Required tools"),
+     lld("beginner-complete/", "Read: the beginner's guide", "Love Life Drawing's map of how people actually get good. Skim it; you'll come back to it.") ]),
+ S("Lines", "Superimposed lines",
+   "Drawing from the shoulder, not the wrist. Today is about confident strokes that don't wobble — speed and commitment over accuracy.",
+   [ W("Skip today — first real session."),
+     dbox("1/2", "Read: using your arm", "Short. Why the shoulder, and what the wrist is for.", "Lines: Using Your Arm"),
+     dbox("1/superimposedlines", "Superimposed lines", "A page of straight lines, then arcs, each traced over eight times, fast and from the shoulder. Fraying at the far end is fine; fraying at the start is not.", "Superimposed Lines"),
+     dbox("1/ghostedlines", "Ghosted lines", "Plant a start dot and an end dot, ghost the motion a few times, then commit in one stroke. Half a page.", "Ghosted Lines") ]),
+ S("Lines", "Ghosted lines & planes",
+   "Use the ghosting method on everything structural from now on. Accuracy comes second to confidence.",
+   [ W("Half a page of superimposed lines."),
+     dbox("1/ghostedlines", "Ghosted lines", "A full page. Lift the pen, ghost, then one confident stroke, every time.", "Ghosted Lines"),
+     dbox("1/4", "Ghosted planes", "Draw quadrilaterals, then connect corners and midpoints with ghosted lines. Two pages is the homework; one is enough today.", "Lines: Homework"),
+     T("No grinding", "Do the recommended amount and stop. You'll keep practising these as warm-ups forever.") ]),
+ S("Ellipses", "Tables of ellipses",
+   "Ellipses are the other half of your vocabulary. Smooth and confident beats accurate-but-scratchy.",
+   [ W("Half a page of ghosted lines and arcs."),
+     dbox("1/tablesofellipses", "Tables of ellipses", "Fill tables of ellipses, drawing through each one two or three times. Keep them snappy; let them touch their neighbours.", "Tables of Ellipses"),
+     lld("rewire-your-brain-to-master-art-four-steps/", "Read: rewire your brain for art", "A short piece on why early drawings feel bad and what to do with that feeling.") ]),
+ S("Ellipses", "Ellipses in planes & funnels",
+   "Now fit ellipses snugly inside the planes you drew. This is your first taste of constructing in space.",
+   [ W("One table of ellipses."),
+     dbox("1/ellipsesinplanes", "Ellipses in planes", "Go back to your ghosted planes and fit an ellipse into each, touching all four sides.", "Ellipses in Planes"),
+     dbox("1/funnels", "Funnels", "Ellipses along a curved axis, the minor axis staying aligned to it. One page.", "Funnels") ]),
+ S("Observation", "Observation — draw a simple object",
+   "Time to make a real drawing. Pick something simple — a pear, a mug, an egg. It sounds trivial; it isn't. Pure looking.",
+   [ W("One table of ellipses, half a page of lines."),
+     lld("learn-everything-about-drawing/", "Watch: drawing explained in ten minutes", "The whole discipline in one short video — what you're building toward."),
+     T("Draw one simple object from life", "Look at the object far more than at the page. Twenty minutes, ink, no fixing."),
+     T("Compare, don't fix", "Hold the drawing next to the subject. Note what's off; don't erase, just learn.") ]),
+ // Week 2 — the Boxes of Lesson 1
+ S("Boxes", "Plotted & rough perspective",
+   "Boxes are where spatial reasoning begins. Expect them to look wrong at first — that's the point.",
+   [ W("Lines and ellipses, five minutes."),
+     dbox("1/6", "Read: the basics of perspective", "Why things converge. Short, with pictures.", "Boxes: The Basics"),
+     dbox("1/plottedperspective", "Plotted perspective", "One page, drawn with a ruler to the vanishing points, to see the rules in action.", "Plotted Perspective"),
+     dbox("1/roughperspective", "Rough perspective", "Two pages of boxes drawn freehand toward a single vanishing point.", "Rough Perspective"),
+     T("Check with back-lines", "Extend each box's lines in a different colour to see how far your guess at the vanishing point was off.") ]),
+ S("Boxes", "Rotated boxes",
+   "The hardest Lesson 1 exercise. Don't expect to nail it — expect to wrestle with it. The wrestling is the learning.",
+   [ W("Ghosted lines and one ellipse table."),
+     dbox("1/rotatedboxes", "Rotated boxes", "One big exercise: boxes rotating around a central point, out to the edges of the page.", "Rotated Boxes"),
+     T("Keep gaps narrow and even", "Use each neighbouring box as the reference for the next one.") ]),
+ S("Boxes", "Organic perspective",
+   "Loose boxes tumbling through space, growing and shrinking. The fun reward after rotated boxes.",
+   [ W("Lines and ellipses."),
+     dbox("1/organicperspective", "Organic perspective", "Ribbons of boxes flowing through the frame, bigger as they come toward you, overlapping. Two pages.", "Organic Perspective"),
+     T("Vary size and angle", "Bigger means closer. Let them tumble naturally.") ]),
+ S("Observation", "Observation — a second object",
+   "Second real drawing. A different simple object. You should already feel your lines getting calmer.",
+   [ W("One page of mixed Lesson 1 exercises."),
+     lld("train-your-eye-perspective-practice-while-walking/", "Watch: one, two and three-point perspective, made simple", "A ten-minute explainer that will make this week's boxes click."),
+     T("Draw a new simple object from life", "Twenty minutes. Construct it loosely from a box or a cylinder before you draw its outline."),
+     T("Negative-space check", "Glance at the shapes between and around the object to catch proportion errors.") ]),
+ S("Recovery", "Light day — free play",
+   "A deliberately easy day. Drawabox warns against burnout: play is allowed, and it rebuilds motivation.",
+   [ W("Just warm up — that's the whole session if you want."),
+     T("Draw anything for fun", "No rules. Doodle, copy something you like. Keep the streak alive without pressure.") ]),
+ S("Submit", "Lesson 1 homework & critique",
+   "Assemble your best Lesson 1 pages and post them for free community critique. Feedback is how you improve fastest.",
+   [ W("Five minutes."),
+     dbox("1/11", "Compile the Lesson 1 homework", "The homework page lists exactly which pages to photograph: lines, ellipses, boxes.", "Boxes: Homework"),
+     T("Post for free critique", "Submit through the Drawabox community — the lesson page links the Discord and the subreddit."),
+     dbox("1/12", "Read: what next", "The challenge that starts tomorrow, and why it comes before Lesson 2.", "What Next?") ]),
+ // Week 3 — the 250 Box Challenge begins
+ S("Box challenge", "250 Box Challenge — begins",
+   "The single most VFX-relevant exercise in the course: it trains your brain to build objects in believable perspective. About thirteen boxes a session for the next four weeks.",
+   [ W("Lines and ellipses, always."),
+     dbox("250boxes/1", "Read the challenge", "What it is and why 250. Ten minutes.", "The Challenge"),
+     boxes(1, 8, "Use the line-extension method after each box: extend all three sets of edges and see where they converge."),
+     T("Don't binge", "A handful a day, each one checked, beats fifty rushed.") ]),
+ boxDay(9, 21, "", "Keep checking your extensions. You'll start to see your error shrink across the set.",
+   "Vary your rates of foreshortening — some shallow, some dramatic.", null),
+ boxDay(22, 34, "", "Colour-code the three sets of parallel lines if it helps you see which way each should converge.",
+   "Draw the boxes big enough to see the lines; six to eight per page.", null),
+ S("Observation", "Value & light — intro",
+   "A break from boxes. Start learning how form turns in light — the skill that lets you judge the lighting in a plate.",
+   [ W("Lines and ellipses."),
+     boxes(35, 39, "Five boxes as today's warm-up."),
+     yt("V3WmrWUEIJo", "Watch: shading light and form — the basics", "Proko on the terminator, core shadow, halftone and reflected light. Fifteen minutes."),
+     T("One sphere, shaded", "From a single clear light source. Pencil is fine for shading days.") ]),
+ boxDay(40, 52, "", "Push through. Each box is quietly rewiring how you see edges and depth.",
+   "Focus on clean, single-stroke ghosted lines even when you're tired.", null),
+ boxDay(53, 65, "Phase 1 checkpoint", "End of Phase 1. You've got confident lines, decent ellipses, and boxes that are starting to sit in real space.",
+   "Notice how much straighter your guess at the third vanishing point has become.",
+   T("Phase 1 reflection", "Flip back to your day-2 lines. See the difference? That's the reps working.")),
 );
 
 // ---------- PHASE 2 : Weeks 4–6 (sessions 19–36) ----------
-const p2 = [];
-for (let i=0;i<6;i++){ // week 4
-  p2.push({focus:"Box challenge", title:`250 Boxes — set ${56+i*10}–${65+i*10}`,
-   blurb:"Phase 2 is the spatial core. Grind the box challenge as your main work; keep it ~10/day.",
-   tasks:[ W("Lines, ellipses, a few rotated boxes."),
-    {tag:'main',title:`Boxes ${56+i*10}–${65+i*10}`,meta:'Line extensions every box. Watch your convergence error shrink.'},
-    (i%2===0)? proko('Watch: a short form/simplification lesson','Free tutorial on simplifying what you see into forms.')
-             : {tag:'main',title:'10-min observation sketch',meta:'Any object on your desk. Construct it from boxes/cylinders first.'} ]});
-}
-// week 5 — finish boxes, start L2
-p2.push({focus:"Box challenge", title:"250 Boxes — final set & submit",
-  blurb:"Finish the challenge. Compile and post for critique — this is a genuine milestone.",
-  tasks:[ W("Warm-up."),
-   {tag:'main',title:'Final boxes to 250',meta:'Whatever you have left to hit 250.'},
-   {tag:'main',title:'Submit 250 Boxes for critique',meta:'Post to the community. You earned this one.'} ]});
-p2.push({focus:"Texture", title:"Drawabox L2 — arrows & organic forms",
-  blurb:"Lesson 2 begins. Arrows teach you to draw flowing forms moving through 3D space.",
-  tasks:[ W("Now warm up WITH a few boxes from the challenge — that's their job forever."),
-   dbox('2','Drawabox L2 — Arrows','Ghost big confident arrows weaving through space, with foreshortening.'),
-   {tag:'main',title:'Line weight on overlaps',meta:'Add weight where one ribbon passes in front of another.'} ]});
-p2.push({focus:"Texture", title:"L2 — organic forms with contours",
-  blurb:"Sausage-like forms wrapped with contour curves. This is pure 3D-surface reasoning.",
-  tasks:[ W("Boxes + lines."),
-   dbox('2','Drawabox L2 — Organic forms','Simple sausage forms, then add contour lines/ellipses around them.'),
-   {tag:'main',title:'Keep degree shifting',meta:'Contour ellipses widen as they near the form\'s ends.'} ]});
-p2.push({focus:"Texture", title:"L2 — texture & dissections",
-  blurb:"Implying texture through cast shadow, not outlines. Trains restraint and observation.",
-  tasks:[ W("Boxes + organic forms."),
-   dbox('2','Drawabox L2 — Texture analysis & dissections','Study real textures; render with shadow shapes, not scribbles.'),
-   {tag:'main',title:'Less is more',meta:'Imply the texture at the focal edge, let the rest breathe.'} ]});
-p2.push({focus:"Observation", title:"A bigger observation piece",
-  blurb:"Apply Lesson 2 thinking to a real object with some texture. Construct first, render second.",
-  tasks:[ W("Boxes + organic forms."),
-   proko('Draw a textured object from life','Pick fruit, fabric or bark. Free observational guidance.'),
-   {tag:'main',title:'Shadow shapes first',meta:'Block the big shadow shape before any detail.'} ]});
-// week 6 — L2 form intersections + submit
-p2.push({focus:"Construction", title:"L2 — form intersections",
-  blurb:"Where boxes, spheres and cylinders overlap and you draw the intersection line. Hard, and hugely useful for combining shapes.",
-  tasks:[ W("Boxes + organic forms."),
-   dbox('2','Drawabox L2 — Form intersections','Draw simple primitives overlapping; find where their surfaces meet.'),
-   {tag:'main',title:'Believe the volumes',meta:'The intersection line tells you the forms are solid, not hollow.'} ]});
-p2.push({focus:"Construction", title:"L2 — organic intersections",
-  blurb:"Sausage forms slumping and resting on each other under gravity. The payoff exercise of Lesson 2.",
-  tasks:[ W("Warm-up."),
-   dbox('2','Drawabox L2 — Organic intersections','Pile of organic forms; show weight, sag and cast shadow.'),
-   {tag:'main',title:'Add cast shadows',meta:'Ground the pile with shadows pooling where forms meet.'} ]});
-p2.push({focus:"Submit", title:"Lesson 2 homework + critique",
-  blurb:"Compile and submit Lesson 2. Then reward yourself with a free-play day next.",
-  tasks:[ W("Warm-up."),
-   {tag:'main',title:'Compile & post L2 homework',meta:'Arrows, organic forms, texture, intersections.'} ]});
-p2.push({focus:"Recovery", title:"Light day — draw for joy",
-  blurb:"Mid-course reset. Drawabox is a slog by design; finishing a fun drawing is the fuel that keeps you going.",
-  tasks:[ W("Just warm up if you like."),
-   {tag:'main',title:'Draw something you actually want to',meta:'A character, a plant, your motorbike — anything. Apply construction loosely, have fun.'} ]});
-p2.push({focus:"Observation", title:"Light & shadow — deeper",
-  blurb:"Go further into the elements of shading now that you can construct solid forms.",
-  tasks:[ W("Boxes + forms."),
-   proko('Watch: the elements of shading','Core shadow, occlusion shadow, halftones, highlight, reflected light. Free tutorial.'),
-   {tag:'main',title:'Shade a stack of forms',meta:'Apply the full shading vocabulary to a box + sphere + cylinder.'} ]});
-p2.push({focus:"Checkpoint", title:"Phase 2 checkpoint",
-  blurb:"End of the spatial core. You can now build and shade believable 3D forms — the foundation of reading any image.",
-  tasks:[ W("Warm-up."),
-   {tag:'main',title:'Construct one complex object from imagination',meta:'No reference. Build it from primitives. This is the skill set-extension work leans on.'},
-   {tag:'main',title:'Phase 2 reflection',meta:'Compare to your 250-box early attempts. Note the leap.'} ]});
-CURRICULUM.push(...p2);
+CURRICULUM.push(
+ // Week 4
+ boxDay(66, 78, "", "Phase 2 is the spatial core. The box challenge is the main work; keep it steady.",
+   "Line extensions on every box. Watch the convergence error shrink.", null),
+ boxDay(79, 91, "", "Halfway feeling like a grind? That's normal. Lean on the observation days for morale.",
+   "Try a few boxes with very dramatic foreshortening, then a few that are almost flat.", null),
+ boxDay(92, 104, "", "Past a hundred. The boxes you drew in week 3 should look slightly embarrassing by now. Good.",
+   "Add line weight to the silhouette of each box once its extensions are checked.", null),
+ S("Observation", "Observation — a shaded object",
+   "Apply what the sphere taught you to a real object: a mug, an egg, a piece of fruit under a lamp.",
+   [ W("Lines and ellipses."),
+     boxes(105, 109, "Five boxes as today's warm-up."),
+     yt("xcCJ2CU-bFw", "Watch: light and shadow in ten minutes", "Marco Bucci on form shadow, cast shadow and why the terminator matters."),
+     T("Shade one object from life", "Block the shadow shape first, then the halftone. Keep the lightest light and the darkest dark honest.") ]),
+ boxDay(110, 122, "", "Keep going. The challenge works on everyone who finishes it, and almost nobody who doesn't.",
+   "Rotate some boxes so a corner points straight at you — the hardest case.", null),
+ boxDay(123, 135, "", "Vary your approach deliberately today: some boxes planned corner-first, some face-first.",
+   "Draw a few boxes much longer than they are wide, like beams.", null),
+ // Week 5
+ boxDay(136, 148, "", "Week 5. You're more than halfway. The habit is now the point as much as the boxes.",
+   "Check every extension. Honesty here is what makes the next hundred useful.", null),
+ boxDay(149, 161, "", "Try drawing a few boxes that overlap, as if stacked — your first taste of Lesson 2.",
+   "Keep the inner lines of overlapping boxes light; the silhouette gets the weight.", null),
+ boxDay(162, 174, "", "The boring middle. Everybody hits it. Show up, do the thirteen, leave.",
+   "Just the boxes today. Clean, checked, done.", null),
+ S("Recovery", "Light day — draw for joy",
+   "Mid-challenge reset. Drawabox is a slog by design; finishing a fun drawing is the fuel that keeps you going.",
+   [ W("Just warm up if you like."),
+     T("Draw something you actually want to", "A character, a plant, your bike — anything. Apply construction loosely. No boxes required today.") ]),
+ boxDay(175, 187, "", "Back to it. Notice how automatic the ghosting has become.",
+   "Shallow foreshortening on most of these — it's the harder one to judge.", null),
+ boxDay(188, 200, "Two hundred", "Two hundred boxes. Put box 1 next to box 200 and look at them for a minute.",
+   "Lay out your first and latest pages side by side before you start.", null),
+ // Week 6
+ boxDay(201, 213, "", "The last fifty. Treat each one as if it's the one you'll submit.",
+   "Dramatic foreshortening on most of these.", null),
+ boxDay(214, 226, "", "Nearly there. If the extensions are converging cleanly, you've got what the challenge is for.",
+   "Mix shallow and dramatic freely now — you should be able to call either.", null),
+ boxDay(227, 239, "", "Second-last box day. The spatial sense you've built is what every later lesson stands on.",
+   "A couple of pages of your best, most deliberate boxes.", null),
+ S("Observation", "Light & shadow — the full vocabulary",
+   "Go further into the elements of shading now that you can build a solid form to put them on.",
+   [ W("Lines and ellipses."),
+     boxes(240, 244, "Five boxes as today's warm-up."),
+     yt("MyrySvbuhsk", "Watch: from flat to realistic shading", "Proko on core shadow, occlusion, halftones, highlight and reflected light."),
+     T("Shade a stack of forms", "A box, a sphere and a cylinder together under one light. Use the full vocabulary.") ]),
+ S("Box challenge", "250 Boxes — 245–250, and a look back",
+   "The last six. Then put the whole challenge on the floor and look at it.",
+   [ W("Lines and ellipses."),
+     boxes(245, 250, "The final boxes. Make them good."),
+     T("Lay it all out", "First page to last. Photograph the spread — this is the proof you'll want later.") ]),
+ S("Submit", "Submit the challenge — Phase 2 checkpoint",
+   "Compile and post the 250 for critique — a genuine milestone. Then prove the point: build something from your head.",
+   [ W("Lines and ellipses, plus a few boxes — that's their job forever now."),
+     dbox("250boxes/1", "Submit the 250 Box Challenge", "Photograph every page and post it through the community links on the challenge page.", "The Challenge"),
+     T("Construct one object from imagination", "No reference. A camera, a toaster, a truck — build it from boxes. This is the skill set-extension work leans on."),
+     T("Phase 2 reflection", "Compare it to your week-2 rough perspective. Note the leap.") ]),
+);
 
 // ---------- PHASE 3 : Weeks 7–9 (sessions 37–54) ----------
-const p3 = [];
-const p3topics = [
-  ["Drawabox L3 — plant construction intro","Plants are where spatial reasoning is tackled in earnest. Construct leaves from a central flow line + edge detail."],
-  ["L3 — leaves","Draw leaves: flow line first, then the envelope, then edge detailing. Construction discipline."],
-  ["WATCH: value scales & edges","Practise a clean value scale and hard/soft edge control. Free tutorial."],
-  ["L3 — branches","Segment-by-segment branch construction; ellipses where segments overlap."],
-  ["L3 — flowers / potted plant","Combine leaves, branches and stems into one constructed plant."],
-  ["WATCH: drawing a plant from life","Draw a real plant. Construct, then shade with your value vocabulary."],
-];
-for (let wk=0; wk<3; wk++){
-  for (let d=0; d<6; d++){
-    const t = p3topics[(wk*2 + d) % p3topics.length];
-    const isWatch = t[0].startsWith("WATCH:");
-    p3.push({
-      focus: isWatch ? "Observation" : (d===5?"Submit":"Construction"),
-      title: t[0].replace("Drawabox ","").replace("L3 — ","").replace("WATCH: ",""),
-      blurb: t[1] + (wk===2 && d===5 ? " End of Phase 3 — compile Lesson 3 and post for critique." : ""),
-      tasks:[
-        W("Boxes + organic forms + a couple of ellipse tables."),
-        isWatch ? proko(t[0].replace("WATCH: ",""), "Watch, then immediately apply it to one drawing. Free.")
-                : dbox('3', t[0], "Flow line → simple envelope → construction → detail."),
-        (wk===2 && d===5)
-          ? {tag:'main',title:'Submit Lesson 3 homework',meta:'Post your plant constructions for free critique.'}
-          : {tag:'main',title:'Construct, never trace',meta:'Build the form in 3D in your head; let reference inform, not dictate.'}
-      ]
-    });
-  }
-}
-CURRICULUM.push(...p3);
+CURRICULUM.push(
+ // Week 7 — Lesson 2
+ S("Form", "Lesson 2 — Arrows",
+   "Lesson 2 begins. Arrows teach you to draw flowing forms moving through 3D space, getting bigger as they come toward you.",
+   [ W("Lines, ellipses, a few boxes."),
+     dbox("2/1", "Read: thinking in 3D", "The idea behind the whole lesson. Ten minutes.", "Thinking in 3D"),
+     dbox("2/organicarrows", "Organic arrows", "Big confident arrows weaving through space, compressing as they recede, overlapping themselves. Two pages.", "Organic Arrows"),
+     T("Line weight on the overlaps", "Add weight only where one part of the ribbon passes in front of another.") ]),
+ S("Form", "Lesson 2 — Organic forms with contour lines",
+   "Sausage-like forms wrapped with contour curves and ellipses. This is pure 3D-surface reasoning.",
+   [ W("Boxes and lines."),
+     dbox("2/contourlines", "Sausages with contour lines", "Simple two-ball sausages, then contour curves across them, then contour ellipses. One page of each.", "Sausages with Contour Lines"),
+     T("Keep the degree shifting", "Contour ellipses get wider as they near the ends of the form — that's what makes it read as round.") ]),
+ S("Texture", "Lesson 2 — Texture analysis",
+   "Implying texture through cast shadow, not outlines. This trains restraint and observation.",
+   [ W("Boxes and organic forms."),
+     dbox("2/textureanalysis", "Texture analysis", "Three textures, each in a gradient from dense to sparse. Draw the shadows the texture casts, never the texture itself.", "Texture Analysis"),
+     T("Shadow shapes, not scribbles", "If you can see a line that isn't a cast shadow, you've drawn the thing instead of the shadow.") ]),
+ S("Texture", "Lesson 2 — Dissections",
+   "Wrap real textures around your sausage forms. Where the texture wraps the form, the form reads as solid.",
+   [ W("Boxes and organic forms."),
+     dbox("2/2", "Dissections", "Two pages of sausages, each a different texture, the texture following the form's contours and fading as it comes into the light.", "Texture and Detail"),
+     T("Less is more", "Imply the texture at the focal edge and let the rest breathe.") ]),
+ S("Observation", "Observation — a textured object from life",
+   "Apply Lesson 2 thinking to a real object with some texture. Construct first, render second.",
+   [ W("Boxes and organic forms."),
+     lld("edges-and-markmaking-the-skill-that-makes-your-drawings-look-good/", "Read: edges and mark-making", "Why a few well-placed marks beat a thousand careful ones."),
+     T("Draw a textured object from life", "Fruit, fabric or bark. Block the big shadow shape before any texture."),
+     T("Detail only at the focus", "Render the texture fully in one small area and let it fall away everywhere else.") ]),
+ S("Construction", "Lesson 2 — Form intersections",
+   "Boxes, spheres and cylinders overlapping, and you draw the line where they meet. Hard, and hugely useful for combining shapes.",
+   [ W("Boxes and organic forms."),
+     dbox("2/3", "Form intersections", "A page of simple primitives of similar size overlapping. Then find where each pair's surfaces meet.", "Construction"),
+     T("Believe the volumes", "The intersection line is what says the forms are solid, not hollow.") ]),
+ // Week 8
+ S("Construction", "Lesson 2 — Form intersections, second page",
+   "Another page, with the forms sharing more consistent foreshortening. The intersections start to feel less like guesses.",
+   [ W("Boxes and organic forms."),
+     dbox("2/3", "Form intersections, page two", "Keep the forms similar in size and shallow in foreshortening. Line weight where forms overlap.", "Construction"),
+     T("Check your cylinders", "Every ellipse's minor axis should run along its cylinder's length.") ]),
+ S("Construction", "Lesson 2 — Organic intersections",
+   "Sausage forms slumping and resting on each other under gravity. The payoff exercise of Lesson 2.",
+   [ W("Warm-up."),
+     dbox("2/3", "Organic intersections", "A pile of sausages, each one sagging over the ones below. One page.", "Construction"),
+     T("Add cast shadows", "Ground the pile with shadows pooling where the forms meet.") ]),
+ S("Observation", "Observation — three forms under one light",
+   "A real still life of three simple objects, shaded. Everything from the sphere and the stack, applied together.",
+   [ W("Boxes and organic forms."),
+     yt("QNDJZSpyRLI", "Watch: shadow mapping basics", "Proko on finding and drawing the shadow shapes before any rendering."),
+     T("Draw three objects together", "Construct each one, then map the shadow shapes, then shade. Keep one light source.") ]),
+ S("Recovery", "Light day — draw something you want to",
+   "Reward day. Finishing a drawing you like is the fuel that gets you through Lesson 3.",
+   [ W("Just warm up if you like."),
+     T("Draw for fun", "Anything. Apply construction loosely, have fun.") ]),
+ S("Submit", "Lesson 2 homework & critique",
+   "Compile and submit Lesson 2: arrows, organic forms, texture, dissections and both kinds of intersection.",
+   [ W("Warm-up."),
+     dbox("2", "Compile the Lesson 2 homework", "The lesson page lists the pages to submit.", "Lesson 2"),
+     T("Post for critique", "Through the Drawabox community links. Read the feedback twice before replying.") ]),
+ S("Checkpoint", "Checkpoint — build something from imagination",
+   "End of the spatial core. You can now build and shade believable 3D forms — the foundation for reading any image.",
+   [ W("Warm-up."),
+     T("Construct one complex object from imagination", "No reference. Build it from primitives and show where they intersect. This is a 3D blockout on paper."),
+     T("Reflection", "Compare it to the object you built after the box challenge. Note what's easier now.") ]),
+ // Week 9 — Lesson 3
+ S("Construction", "Lesson 3 — Leaves",
+   "Plants are where spatial reasoning is tackled in earnest. A leaf is a flow line first, then an envelope, then edge detail.",
+   [ W("Boxes, organic forms, an ellipse table."),
+     dbox("3/1", "Read: the Lesson 3 overview", "Why plants, and the order to build them in.", "Overview"),
+     dbox("3/2", "Leaves", "Flow line, then the simple leaf shape around it, then edge detail. Include a few compound and folded leaves. One page.", "Technical Exercises"),
+     T("Construct, never trace", "Build the form in 3D in your head; let the reference inform, not dictate.") ]),
+ S("Construction", "Lesson 3 — Branches",
+   "Segment-by-segment branch construction, each segment overlapping the last, with ellipses where they meet.",
+   [ W("Boxes, organic forms, an ellipse table."),
+     dbox("3/2", "Branches", "Branches built in overlapping segments, each extending halfway to the next ellipse. One page.", "Technical Exercises"),
+     T("Watch the ellipse degrees", "They shift as the branch turns toward or away from you.") ]),
+ S("Construction", "Lesson 3 — Daisy & mushroom demos",
+   "Draw along with the two simplest demos. The point is the sequence of steps, not the pretty result.",
+   [ W("Boxes, organic forms, an ellipse table."),
+     dbox("3/3", "Draw along: the daisy", "Follow the demo step by step on your own page.", "Daisy Demo"),
+     dbox("3/4", "Draw along: the mushroom", "Same again — a different problem, the same discipline.", "Mushroom Demo") ]),
+ S("Construction", "Lesson 3 — Hibiscus & pitcher plant",
+   "Two harder demos: a flower with real depth, and a plant that is basically a cylinder in disguise.",
+   [ W("Boxes, organic forms, an ellipse table."),
+     dbox("3/5", "Draw along: the hibiscus", "Petals as leaves on a flow, around a central ellipse.", "Hibiscus Demo"),
+     dbox("3/6", "Draw along: the pitcher plant", "The construction is a cylinder with a lid — don't let the detail distract you.", "Pitcher Plant Demo") ]),
+ S("Observation", "Value scales & edges",
+   "A short detour into control: a clean value scale, and where edges should be hard, soft or lost.",
+   [ W("Boxes and ellipses."),
+     T("A clean value scale", "Seven steps from white to black, even gaps, in pencil. Takes longer than you think."),
+     yt("nnhj5efzN_w", "Watch: learn to see like a painter — with edges", "Marco Bucci on hard, soft and lost edges, and why they matter more than detail."),
+     T("Edges on a sphere", "Shade one sphere where the terminator is soft, the cast shadow is hard, and the far side is lost into the background.") ]),
+ S("Observation", "Observation — a plant from life",
+   "Draw a real plant with Lesson 3 construction, then a light shading pass with your value vocabulary.",
+   [ W("Boxes, organic forms, an ellipse table."),
+     T("Construct a plant from life", "Flow lines for every leaf and stem first. Build it the way the demos did."),
+     T("Shade with intent", "One light source, shadow shapes mapped, the lightest leaf left white.") ]),
+);
 
-// ---------- PHASE 4 : Weeks 10–12 (sessions 55–72) ----------
-const p4 = [];
-const p4topics = [
-  ["Drawabox L4 — insect/animal construction","Lesson 4: build complex subjects from simple 3D primitives — exactly how you'd block a set extension."],
-  ["L4 — masses & sausage method","Add organic masses onto a base form; respect how they wrap the underlying volume."],
-  ["WATCH: figure intro — gesture","Optional figure track. Gesture first: the flowing line of action before any structure."],
-  ["L4 — detail & texture pass","Apply Lesson-2 texture restraint to a constructed animal at the focal point."],
-  ["WATCH: the bean & robo-bean","Ribcage + pelvis as two masses (the 'bean'), then box them up (robo-bean)."],
-  ["Drawabox L5 — animal construction","Lesson 5: larger animals. Full construction pipeline, head to ground shadow."],
-];
-for (let wk=0; wk<3; wk++){
-  for (let d=0; d<6; d++){
-    const idx = (wk*2 + d) % p4topics.length;
-    const t = p4topics[idx];
-    const isWatch = t[0].startsWith("WATCH:");
-    const lessonNum = t[0].includes("L5") ? '5' : '4';
-    const finale = (wk===2 && d===5);
-    p4.push({
-      focus: finale ? "Graduation" : (isWatch ? "Figure" : (d===5?"Submit":"Construction")),
-      title: finale ? "Stage 1 complete — the foundations are yours" : t[0].replace("Drawabox ","").replace(/L[45] — /,"").replace("WATCH: ",""),
-      blurb: finale
-        ? "You've gone from wobbly lines to constructing complex subjects in believable 3D space — the hardest part of the whole journey. That eye for form and structure is exactly what a strong Flame artist runs on. Stage 2 is next: now you start drawing people, and working digitally."
-        : t[1],
-      tasks: finale ? [
-        W("One last proper warm-up."),
-        {tag:'main',title:'Draw something ambitious from imagination',meta:'Combine everything: construction, intersections, shading. No reference.'},
-        {tag:'main',title:'Line up day 2 vs today',meta:'Photograph both. This is the proof of how far you\'ve come.'},
-        {tag:'main',title:'Onward to Stage 2',meta:'Tomorrow you start drawing people — gesture, the figure, and your first digital sessions.'}
-      ] : [
-        W("Boxes + forms + ellipses."),
-        isWatch ? prokoFig(t[0].replace("WATCH: ",""), "Watch then apply immediately. Free.")
-                : dbox(lessonNum, t[0], "Major forms first, detail last."),
-        (d===5)
-          ? {tag:'main',title:'Compile & submit homework',meta:'Post your latest constructions for critique.'}
-          : {tag:'main',title:'Construct from primitives',meta:'Box the ribcage, cylinder the limbs — think like a 3D blockout.'}
-      ]
-    });
-  }
-}
-CURRICULUM.push(...p4);
+// ---------- PHASE 4 : Weeks 10–12 (sessions 55–71) ----------
+CURRICULUM.push(
+ // Week 10 — Lesson 3 finished, Lesson 4 begun
+ S("Construction", "Lesson 3 — Potato plant & the informal demos",
+   "The last demos, including the ones that build on forms that aren't flat to begin with.",
+   [ W("Boxes, organic forms, an ellipse table."),
+     dbox("3/7", "Draw along: the potato plant", "A messy, real-world plant. The construction holds it together.", "Potato Plant Demo"),
+     dbox("3/8", "Read the informal demos", "Then draw one plant from your own reference using what they show.", "Informal Demos") ]),
+ S("Construction", "Lesson 3 — Plants, pages five and six",
+   "Your own reference now. Pick plants with different problems: a cactus, a pine cone, a mushroom cluster.",
+   [ W("Boxes, organic forms, an ellipse table."),
+     T("Two plant constructions", "Choose reference where you can see the whole plant. Flow line, envelope, detail — in that order."),
+     T("Construct, never trace", "If a line isn't explained by a form you've drawn, it shouldn't be there.") ]),
+ S("Construction", "Lesson 3 — Plants, pages seven and eight",
+   "Finish the set of eight plant drawings. By now the sequence should feel automatic.",
+   [ W("Boxes, organic forms, an ellipse table."),
+     T("Two more plant constructions", "Make one of them a flower. Petals are leaves; a flower is leaves on a flow around an ellipse."),
+     T("Pick your best two", "Set them aside for the submission.") ]),
+ S("Submit", "Lesson 3 homework & critique",
+   "Compile Lesson 3 — leaves, branches, eight plants — and post it. Then a look back.",
+   [ W("Warm-up."),
+     dbox("3", "Compile the Lesson 3 homework", "The lesson page lists what to submit.", "Lesson 3"),
+     T("Post for critique", "Through the community links. Note which plant got the most comments and why."),
+     T("Reflection", "Put your first plant next to your eighth.") ]),
+ S("Construction", "Lesson 4 — Insects & the sausage method",
+   "Lesson 4: build complex subjects from simple 3D primitives — exactly how you'd block out a set extension. Legs are sausages, strictly.",
+   [ W("Boxes, organic forms, ellipses."),
+     dbox("4/1", "Read: the Lesson 4 overview", "The sausage method for legs, and why the masses must stay simple.", "Overview"),
+     dbox("4/2", "Draw along: the wasp", "Follow the demo on your own page, step by step.", "Wasp Demo") ]),
+ S("Construction", "Lesson 4 — Louse & scorpion",
+   "Two more demos, one squat and one spiky. Same method, same restraint.",
+   [ W("Boxes, organic forms, ellipses."),
+     dbox("4/3", "Draw along: the louse", "Major masses first, legs as chains of sausages.", "Louse Demo"),
+     dbox("4/4", "Draw along: the scorpion", "The tail is a chain of overlapping forms — think branch segments.", "Scorpion Demo") ]),
+ // Week 11
+ S("Construction", "Lesson 4 — Black widow & house fly",
+   "The last two demos. Watch how the detail pass stays small and sits only at the focal point.",
+   [ W("Boxes, organic forms, ellipses."),
+     dbox("4/5", "Draw along: the black widow", "Ball masses, sausage legs, and only then the detail.", "Black Widow Demo"),
+     dbox("4/6", "Draw along: the house fly", "Wings are flat forms that wrap — Lesson 3 leaves, essentially.", "House Fly Demo") ]),
+ S("Construction", "Lesson 4 — Your own insects",
+   "Your own reference now, two insects, using the informal demos as the guide.",
+   [ W("Boxes, organic forms, ellipses."),
+     dbox("4/7", "Read the informal demos", "The shrimp construction is the one to study.", "Informal Demos"),
+     T("Two insects from your own reference", "Choose clear, whole-body reference. Build the masses before any leg.") ]),
+ S("Observation", "Observation — a small thing from life",
+   "Find a real bug, a shell, a seed pod — anything small with structure — and build it from life.",
+   [ W("Boxes, organic forms, ellipses."),
+     T("Construct it from life", "Ten minutes looking before the first mark. Primitives, intersections, then detail."),
+     T("Detail only at the focus", "One small area fully rendered. Everywhere else, construction lines only.") ]),
+ S("Construction", "Lesson 4 — Finish the set",
+   "Insects nine and ten, and a texture pass on your best one using Lesson 2 restraint.",
+   [ W("Boxes, organic forms, ellipses."),
+     T("Insects nine and ten", "Something with wings, and something with a lot of legs."),
+     T("A detail and texture pass", "Go back to your best insect. Add texture at the focal point only, as cast shadow shapes.") ]),
+ S("Submit", "Lesson 4 homework & critique",
+   "Compile the ten insect drawings and post them. A small lesson with a big payoff.",
+   [ W("Warm-up."),
+     dbox("4", "Compile the Lesson 4 homework", "The lesson page lists what to submit.", "Lesson 4"),
+     T("Post for critique", "Through the community links.") ]),
+ S("Recovery", "Light day — the last of Stage 1",
+   "One more easy day before the animals. You've earned it.",
+   [ W("Just warm up if you like."),
+     T("Draw something you want to", "Anything at all. Notice how much construction creeps in on its own now.") ]),
+ // Week 12 — Lesson 5 begun, Stage 1 closed
+ S("Construction", "Lesson 5 — Animals & the wolf",
+   "Lesson 5: larger animals. The full construction pipeline, from the big masses to the head.",
+   [ W("Boxes, organic forms, ellipses."),
+     dbox("5/1", "Read: the Lesson 5 overview", "Masses, the sausage legs again, and how the head is built.", "Overview"),
+     dbox("5/2", "Draw along: the wolf", "Follow the demo on your own page.", "Wolf Demo") ]),
+ S("Construction", "Lesson 5 — Tiger head & otter",
+   "How the head is built — a ball, an eye socket, a muzzle — and a whole animal that is mostly one long sausage.",
+   [ W("Boxes, organic forms, ellipses."),
+     dbox("5/3", "Draw along: the tiger head", "The head construction method you'll use for every animal.", "Tiger Head Demo"),
+     dbox("5/4", "Draw along: the otter", "One flowing mass, legs attached as sausages.", "Otter Demo") ]),
+ S("Construction", "Lesson 5 — Pelican & the informal demos",
+   "A bird, then the informal demos and the notes on head construction. Then two animals of your own.",
+   [ W("Boxes, organic forms, ellipses."),
+     dbox("5/5", "Draw along: the pelican", "Birds are a body mass, a neck of sausages and a head — nothing new.", "White Pelican Demo"),
+     dbox("5/6", "Read the informal demos", "Especially the notes on how to think about head construction.", "Informal Demos"),
+     T("Two animals from your own reference", "Clear, whole-body reference. Masses, then legs, then head.") ]),
+ S("Observation", "Observation — a pet or an animal from reference",
+   "Construct an animal the way the demos did, from your own photo or the one in the room with you.",
+   [ W("Boxes, organic forms, ellipses."),
+     T("Construct one animal", "If it's a live pet, work from a photo you take — construction needs it to hold still."),
+     T("Compare to the demo method", "Did you build the masses first? Did the legs stay sausages?") ]),
+ S("Graduation", "Stage 1 complete — the foundations are yours",
+   "You've gone from wobbly lines to constructing complex subjects in believable 3D space — the hardest part of the whole journey. That eye for form and structure is exactly what a strong Flame artist runs on. Stage 2 is next: now you start drawing people, and working digitally.",
+   [ W("One last proper warm-up."),
+     T("Draw something ambitious from imagination", "Combine everything: construction, intersections, shading. No reference."),
+     T("Line up day 2 against today", "Photograph both. This is the proof of how far you've come."),
+     T("Lesson 5 continues on weekends", "You've drawn five of the ten animals it asks for. Finish the rest as your free drawing during Stage 2, then submit."),
+     T("Onward to Stage 2", "Tomorrow you start drawing people — gesture, the figure, and your first digital sessions.") ]),
+);
 
 // ============================================================
-//  STAGE 2 — Weeks 13–24 : DRAWING REAL THINGS
-//  People (figure + portrait), observational construction,
-//  and the move onto the tablet for digital.
-//  Resources: Love Life Drawing (free figure/gesture/portrait),
-//  free Proko YouTube where clearest, Drawabox L6–7, Ctrl+Paint.
+//  STAGE 2 — Weeks 13–16 : DRAWING REAL THINGS
+//  People (figure and portrait), everyday objects, the tablet.
+//  Proko's free figure videos, Love Life Drawing, Drawabox 6–7, Ctrl+Paint.
 // ============================================================
-const ctrlpaint = (label, meta) => ({tag:'watch', title:label, meta:`${meta} <a href="https://www.ctrlpaint.com/library" target="_blank" rel="noopener">Ctrl+Paint library →</a>`});
+const mkStage = (topics, warm) => CURRICULUM.push(...topics.flat().map(([focus, title, blurb, tasks]) => ({
+  focus, title, blurb, tasks: [W(warm), ...tasks]
+})));
 
-const stage2topics = [
-  // Phase 5 — Gesture (wk 13–15)
-  [["Figure","Figure — introduction & gesture",
+const stage2 = [
+  // Phase 5 — Gesture (week 13)
+  [["Figure", "Figure — introduction & gesture",
     "Stage 2 begins: drawing people. Everything in the figure starts with gesture — the flowing line of action, captured fast before any structure.",
-    [prokoFig('Watch: beginner gesture drawing','The rhythm & line of action. Do 30-second gesture sketches. Free.'),
-     {tag:'main',title:'10 × 30-second gestures',meta:'Speed over accuracy. Capture the flow, not the outline.'}]],
-   ["Figure","Gesture — flow & rhythm",
+    [yt("8j39NqwL7s4", "Watch: how to draw gesture, step by step", "Proko's free introduction: the line of action and the rhythm of a pose."),
+     T("Ten 30-second gestures", `Speed over accuracy. Capture the flow, not the outline. ${POSES}.`)]],
+   ["Figure", "Gesture — flow & rhythm",
     "More gesture. You're training your hand to find the big sweeping motion of a pose in seconds.",
-    [prokoFig('Watch: rhythm & flow in the figure','Chains of curves flowing through the figure. Free.'),
-     {tag:'main',title:'1 page of 1-minute poses',meta:'Use free pose libraries (e.g. line-of-action.com).'}]],
-   ["Figure","The Bean",
+    [lld("beginner-gesture-drawing-1-seeing-and-respecting-movement/", "Watch: seeing and respecting movement", "Love Life Drawing's first beginner gesture lesson."),
+     T("A page of one-minute poses", `Chains of curves flowing through the figure. ${POSES}.`)]],
+   ["Figure", "The Bean",
     "The 'bean' — ribcage and pelvis as two simple masses that twist and tilt against each other. The core of believable posture.",
-    [prokoFig('Watch: the ribcage & pelvis masses','Two masses, the gesture between them, the twist. Free.'),
-     {tag:'main',title:'Draw 8 beans from poses',meta:'Find the tilt of chest vs hips in each.'}]],
-   ["Figure","Robo-bean",
+    [yt("NTbi5b8XeC0", "Watch: drawing faster with the bean", "Proko on the two masses, the gesture between them, and the twist."),
+     T("Eight beans from poses", "Find the tilt of chest against hips in each one.")]],
+   ["Figure", "Robo-bean",
     "Box up the bean — turn the two soft masses into solid 3D blocks so you can see them turn in space.",
-    [prokoFig('Watch: turning the masses into 3D forms','Convert the bean into boxy 3D forms. Free.'),
-     {tag:'main',title:'Robo-bean over your gestures',meta:'Keep the gesture underneath; the structure sits on top.'}]],
-   ["Digital","Ctrl+Paint — getting onto the tablet",
+    [yt("yqxPHew5bGQ", "Watch: structure in the body — the robo bean", "Proko converts the bean into boxy forms you can rotate."),
+     T("Robo-beans over your gestures", "Keep the gesture underneath; the structure sits on top.")]],
+   ["Digital", "Ctrl+Paint — getting onto the tablet",
     "First digital day. Directly useful for your Flame work. Just learn the tool — brushes, strokes, undo.",
-    [ctrlpaint('Ctrl+Paint — Digital Painting 101 (free)','Hardware, brush control, the digital line.'),
-     {tag:'main',title:'Repeat L1 lines & ellipses, digitally',meta:'Your fundamentals, now on the tablet. Notice what feels different.'}]],
-   ["Submit","Gesture checkpoint",
-    "End of the gesture block. Compare your day-1 gestures to today — looser, faster, more alive.",
-    [{tag:'main',title:'Optional: post gestures for feedback',meta:'Share to a free community like the Drawabox or r/learnart subreddits.'},
-     {tag:'main',title:'1 page gestures + 1 page beans',meta:'Your warm-up now includes gesture forever.'}]]],
-  // Phase 6 — Structure & proportion (wk 16–18)
-  [["Figure","Mannequinization",
-    "Turn the robo-bean into a simple mannequin — adding limbs as cylinders and boxes. The full simplified figure.",
-    [prokoFig('Watch: building the mannequin','Limbs as simple forms attached to the bean. Free.'),
-     {tag:'main',title:'3 mannequins from poses',meta:'Gesture → bean → robo-bean → limbs.'}]],
-   ["Figure","Proportions of the figure",
-    "How many heads tall, where the landmarks sit. A measuring framework so figures stop looking 'off'.",
-    [prokoFig('Watch: figure proportions','The 7.5–8 head canon and key landmarks. Free.'),
-     {tag:'main',title:'One measured standing figure',meta:'Mark the landmarks before drawing.'}]],
-   ["Construction","Drawabox L6 — drawing everyday objects",
-    "Back to Drawabox: constructing real man-made objects with precision. Sharpens the box skills for hard-surface accuracy.",
-    [dbox('6','Drawabox L6 — Objects','Precise constructional drawing of everyday objects.'),
-     {tag:'main',title:'Construct one object accurately',meta:'Orthographic planning, then build it in perspective.'}]],
-   ["Digital","Ctrl+Paint — value & the digital sketch",
-    "Use the tablet for what it's great at: fast value studies. The light/shadow skill from Stage 1, digital.",
-    [ctrlpaint('Ctrl+Paint — value & sketching','Greyscale thumbnails, blocking shadow shapes.'),
-     {tag:'main',title:'3 greyscale value thumbnails',meta:'Squint at a photo, block 3 values only.'}]],
-   ["Figure","Combining gesture + structure",
+    [cp("getting-started", "Watch: Digital Painting 101", "Ctrl+Paint's free starter series: navigation, layers, brush and eraser."),
+     T("Repeat Lesson 1 lines and ellipses, digitally", "Your fundamentals, now on the tablet. Notice what feels different.")]],
+   ["Submit", "Gesture checkpoint",
+    "End of the gesture block. Compare your day-one gestures to today's — looser, faster, more alive.",
+    [lld("top-5-gesture-mistakes/", "Watch: the top five gesture mistakes", "Check your week's pages against each one."),
+     T("A page of gestures and a page of beans", "Your warm-up now includes gesture, forever.")]]],
+  // Phase 6 — Structure & proportion (week 14)
+  [["Figure", "Mannequinization",
+    "Turn the robo-bean into a simple mannequin — limbs as cylinders and boxes. The full simplified figure.",
+    [yt("nRHfcqjbPq8", "Watch: mannequinization", "Proko on the structure of the human body as simple forms."),
+     T("Three mannequins from poses", "Gesture, bean, robo-bean, limbs — in that order.")]],
+   ["Figure", "Proportions of the figure",
+    "How many heads tall, and where the landmarks sit. A measuring framework so figures stop looking 'off'.",
+    [yt("OyWHmxFGVK4", "Watch: human figure proportions", "Proko on the average figure and its landmarks."),
+     lld("proportions-in-practice/", "Read: proportions in practice", "The same idea from the other direction — how to use it while drawing."),
+     T("One measured standing figure", "Mark the landmarks before drawing anything else.")]],
+   ["Construction", "Drawabox Lesson 6 — everyday objects",
+    "Back to Drawabox: constructing man-made objects with precision. Sharpens the box skills for hard-surface accuracy.",
+    [dbox("6/1", "Read the Lesson 6 overview", "About the tools, and the orthographic plans that make precision possible.", "Overview"),
+     dbox("6/2", "Draw along: the Bluetooth speaker", "Plan it orthographically, then build it in perspective.", "Bluetooth Speaker Demo")]],
+   ["Digital", "Ctrl+Paint — value & the digital sketch",
+    "Use the tablet for what it's great at: fast value studies. The light-and-shadow skill from Stage 1, digital.",
+    [cp("videos/simplifying-photo-studies-pt1", "Watch: simplifying photo studies", "Squint a photo down to its big value shapes."),
+     T("Three greyscale value thumbnails", "Block three values only. No detail.")]],
+   ["Figure", "Combining gesture & structure",
     "The whole pipeline in one drawing: feel the gesture, build the mannequin on it. This is figure drawing.",
-    [prokoFig('Watch: gesture + structure together','Gesture underneath, structure on top. Free.'),
-     {tag:'main',title:'2 full mannequin figures',meta:'2–3 min each. Don\'t lose the gesture.'}]],
-   ["Submit","Figure checkpoint",
+    [yt("Qwt_wggUFHg", "Watch: landmarks of the human body", "The bony points that keep the structure honest on top of the gesture."),
+     T("Two full mannequin figures", "Two to three minutes each. Don't lose the gesture.")]],
+   ["Submit", "Figure checkpoint",
     "End of Phase 6. You can rough out a believable, posed human figure from simple forms.",
-    [{tag:'main',title:'Best figure of the week',meta:'Keep it. You\'ll compare in 12 weeks.'},
-     {tag:'main',title:'Reflection',meta:'Figures are the hardest thing most beginners attempt — and you\'re doing it.'}]]],
-  // Phase 7 — The head & portrait (wk 19–21)
-  [["Portrait","The Loomis head",
-    "Heads now. The Loomis method: a ball + carved planes that lets you draw a head from any angle.",
-    [{tag:'watch',title:'Watch: how to draw the head (Loomis method)',meta:'Ball, side planes, jaw. Proko\'s free YouTube head series is the landmark explainer. <a href="https://www.youtube.com/proko" target="_blank" rel="noopener">Proko on YouTube →</a>'},
-     {tag:'main',title:'4 heads, different angles',meta:'Construct the ball + plane each time.'}]],
-   ["Portrait","Features — the eye & nose",
+    [lld("7-tools-to-give-weight-to-your-figures/", "Watch: seven tools to give your figures weight", "The difference between a figure that stands and one that floats."),
+     T("Best figure of the week", "Keep it. You'll compare in four weeks."),
+     T("Reflection", "Figures are the hardest thing most beginners attempt — and you're doing it.")]]],
+  // Phase 7 — The head & portrait (week 15)
+  [["Portrait", "The Loomis head",
+    "Heads now. The Loomis method: a ball with carved side planes that lets you draw a head from any angle.",
+    [yt("1EPNYWeEf1U", "Watch: how to draw the head from any angle", "Proko's version of the Loomis method — the landmark explainer."),
+     T("Four heads, different angles", "Construct the ball and the planes every time.")]],
+   ["Portrait", "Features — the eye & nose",
     "Constructing facial features as 3D forms, not flat symbols.",
-    [{tag:'watch',title:'Watch: drawing the eye & nose',meta:'The eye as a ball in a socket; the nose as a wedge. Free on Proko\'s YouTube. <a href="https://www.youtube.com/proko" target="_blank" rel="noopener">Proko on YouTube →</a>'},
-     {tag:'main',title:'Fill a page with eyes & noses',meta:'From reference. Form first.'}]],
-   ["Portrait","Features — mouth & ear",
+    [yt("u6-bCgRmcko", "Watch: how to draw eyes — structure", "The eye as a ball in a socket, with lids that wrap it."),
+     yt("nWZZ3SFmDS8", "Watch: how to draw a nose — structure", "The nose as a wedge with planes."),
+     T("Fill a page with eyes and noses", "From reference. Form first.")]],
+   ["Portrait", "Features — mouth & ear",
     "The remaining features, and how they sit on the curved surface of the head.",
-    [{tag:'watch',title:'Watch: drawing the mouth & ear',meta:'Lips as forms on a cylinder; ear placement. Free on Proko\'s YouTube. <a href="https://www.youtube.com/proko" target="_blank" rel="noopener">Proko on YouTube →</a>'},
-     {tag:'main',title:'Page of mouths & ears',meta:'Wrap them onto the head\'s curve.'}]],
-   ["Portrait","Portrait from reference",
-    "Put the head together: construct, place features, then a light shading pass using your Stage 1 value skills.",
-    [{tag:'main',title:'One constructed portrait',meta:'Loomis head → features → block the shadow shape.'},
-     {tag:'main',title:'Don\'t chase likeness yet',meta:'Correct construction first; likeness follows.'}]],
-   ["Digital","Ctrl+Paint — digital portrait sketch",
+    [yt("Xq3aHSuKRyg", "Watch: how to draw lips — structure", "Lips as forms on a cylinder."),
+     yt("Yqgw_iMWwlw", "Watch: how to draw ears — structure", "Placement first, then the simplified shapes."),
+     T("A page of mouths and ears", "Wrap them onto the head's curve.")]],
+   ["Portrait", "Portrait from reference",
+    "Put the head together: construct, place the features, then a light shading pass using your Stage 1 value skills.",
+    [yt("z4ZLkyTuX_w", "Watch: the head, front view", "Proko draws a full front-view head start to finish."),
+     T("One constructed portrait", "Loomis head, features, then the shadow shape blocked in."),
+     T("Don't chase likeness yet", "Correct construction first; likeness follows.")]],
+   ["Digital", "Ctrl+Paint — digital portrait sketch",
     "Try the head construction on the tablet. Easy undo makes it a great place to experiment.",
-    [ctrlpaint('Ctrl+Paint — sketching workflow','Rough, refine, clean-up layers.'),
-     {tag:'main',title:'Digital head construction',meta:'Loomis method, digitally.'}]],
-   ["Submit","Portrait checkpoint",
+    [cp("videos/how-to-improve-your-digital-sketches-pt-1", "Watch: improving your digital sketches", "Rough, refine, clean up — on layers."),
+     T("A digital head construction", "The Loomis method, digitally.")]],
+   ["Submit", "Portrait checkpoint",
     "End of Phase 7. You can construct a head and place its features in 3D space.",
-    [{tag:'main',title:'Best portrait of the week',meta:'Save it.'},
-     {tag:'main',title:'Reflection',meta:'Heads are notoriously hard. You now have a repeatable method.'}]]],
-  // Phase 8 — Synthesis (wk 22–24)
-  [["Construction","Drawabox L7 — drawing from observation",
-    "Drawabox's final lesson: applying everything to draw complex real objects (e.g. vehicles). The graduation of the construction track.",
-    [dbox('7','Drawabox L7 — Vehicles / observation','Major forms, then subdivide for detail and accuracy.'),
-     {tag:'main',title:'Begin one complex object',meta:'Block the big boxes first. This is a multi-day piece.'}]],
-   ["Construction","L7 — refining the build",
-    "Continue the complex object. Patience and subdivision over speed.",
-    [dbox('7','Drawabox L7 — continue','Subdivide to place details accurately.'),
-     {tag:'main',title:'Add the secondary forms',meta:'Stay on the construction; resist detailing too early.'}]],
-   ["Figure","Figure + environment quick study",
+    [T("Best portrait of the week", "Save it."),
+     T("Reflection", "Heads are notoriously hard. You now have a repeatable method.")]]],
+  // Phase 8 — Synthesis (week 16)
+  [["Construction", "Drawabox Lesson 7 — vehicles",
+    "Drawabox's final lesson: applying everything to draw complex real objects. The graduation of the construction track.",
+    [dbox("7/1", "Read the Lesson 7 overview", "Prerequisites and the approach: major forms, then subdivide for accuracy.", "Overview"),
+     dbox("7/2", "Watch: the video lectures", "Ellipses in planes, and how the demos plan a vehicle before drawing it.", "Video Lectures"),
+     T("Begin one complex object", "Block the big boxes first. This is a multi-day piece.")]],
+   ["Construction", "Lesson 7 — refining the build",
+    "Continue the vehicle. Patience and subdivision over speed.",
+    [dbox("7/5", "Draw along: the Mustang", "Watch how the demo subdivides to place every detail accurately.", "Shelby Mustang Demo"),
+     T("Add the secondary forms", "Stay on the construction; resist detailing too early.")]],
+   ["Figure", "Figure & environment quick study",
     "Combine people and objects: a figure interacting with a simple object or space.",
-    [prokoFig('Recall: gesture + mannequin','Warm up with 5 gestures first.'),
-     {tag:'main',title:'Figure using/holding an object',meta:'Construct both; show contact and weight.'}]],
-   ["Digital","Ctrl+Paint — rendering basics",
+    [lld("4-easy-steps-to-finally-conquer-foreshortening/", "Watch: four steps to conquer foreshortening", "What happens to the figure when it comes toward the camera."),
+     T("A figure using or holding an object", "Construct both; show contact and weight.")]],
+   ["Digital", "Ctrl+Paint — rendering basics",
     "Push the digital work toward rendering: turning a form with values on the tablet.",
-    [ctrlpaint('Ctrl+Paint — rendering form','Soft vs hard edges, building up value.'),
-     {tag:'main',title:'Render one digital sphere → object',meta:'Full light logic: core shadow, occlusion, reflected light.'}]],
-   ["Project","Self-directed piece",
+    [cp("videos/lets-paint-a-marble-pt1", "Watch: let's paint a marble", "A sphere rendered start to finish — the Stage 1 sphere, digital."),
+     T("Render one digital sphere, then an object", "Full light logic: core shadow, occlusion, reflected light.")]],
+   ["Project", "Self-directed piece",
     "Your choice. Combine any skills toward something you actually want to make. This is why you started.",
-    [{tag:'main',title:'Plan & start a personal drawing',meta:'Figure, object, or scene — whatever excites you.'},
-     {tag:'main',title:'Apply, don\'t learn',meta:'Today is about using what you have, not new material.'}]],
-   ["Graduation","Stage 2 complete",
-    "Six months in. You can draw people, heads, complex objects, and work digitally. You're no longer a beginner.",
-    [{tag:'main',title:'Finish your personal piece',meta:'Bring it to a state you\'re proud of.'},
-     {tag:'main',title:'Line up Week 1 vs now',meta:'The difference is the whole point.'},
-     {tag:'main',title:'Onward to Stage 3',meta:'Next: perspective, anatomy and light in earnest.'}]]],
+    [T("Plan and start a personal drawing", "Figure, object, or scene — whatever excites you."),
+     T("Apply, don't learn", "Today is about using what you have, not new material.")]],
+   ["Graduation", "Stage 2 complete",
+    "Four months in. You can draw people, heads, complex objects, and work digitally. You're no longer a beginner.",
+    [T("Finish your personal piece", "Bring it to a state you're proud of."),
+     T("Line up week 1 against now", "The difference is the whole point."),
+     T("Onward to Stage 3", "Next: perspective, anatomy and light in earnest.")]]],
 ];
-
-CURRICULUM.push(...stage2topics.flat().map(([focus,title,blurb,tasks])=>({
-  focus, title, blurb, tasks:[W("Gestures + a few boxes + ellipses — your standing warm-up."), ...tasks]
-})));
+mkStage(stage2, "Gestures, a few boxes, ellipses — your standing warm-up.");
 
 // ============================================================
-//  STAGE 3 — Weeks 25–36 : DEPTH & CONTROL
-//  Perspective in earnest, anatomy building blocks,
-//  value/light studies, digital painting fundamentals.
+//  STAGE 3 — Weeks 17–20 : DEPTH & CONTROL
+//  Perspective in earnest, anatomy as simple masses,
+//  light and value, digital painting fundamentals.
 // ============================================================
-const mkStage = (topics) => CURRICULUM.push(...topics.flat().map(([focus,title,blurb,tasks])=>({
-  focus, title, blurb, tasks:[W("Standing warm-up: gestures, boxes, ellipses."), ...tasks]
-})));
-
 const stage3 = [
-  // Phase 9 — Perspective (wk 25–27)
-  [["Perspective","1-point perspective in depth",
-    "Stage 3: control. Real perspective study now — starting with one-point: rooms, corridors, a single vanishing point.",
-    [{tag:'main',title:'Draw an interior in 1-point',meta:'Floor grid, objects receding to one VP.'},
-     {tag:'watch',title:'Watch: perspective basics',meta:'How parallel lines converge to vanishing points. Free guide. <a href="https://www.lovelifedrawing.com/tutorials/" target="_blank" rel="noopener">Love Life Drawing →</a>'}]],
-   ["Perspective","2-point perspective",
-    "The workhorse of environment drawing. Two vanishing points — buildings, boxes seen from a corner.",
-    [{tag:'main',title:'A street corner / building in 2-point',meta:'Two VPs on the horizon, verticals true.'},
-     {tag:'main',title:'Check with extensions',meta:'Your 250-box instincts pay off here.'}]],
-   ["Perspective","3-point & camera height",
-    "Add the third VP for dramatic up/down shots — directly relevant to comp and camera thinking.",
-    [{tag:'main',title:'A tall building, worm\'s-eye view',meta:'Third VP above or below.'},
-     {tag:'main',title:'Note how camera height changes the feel',meta:'High vs low horizon.'}]],
-   ["Perspective","Ellipses in perspective",
+  // Phase 9 — Perspective (week 17)
+  [["Perspective", "One-point perspective in depth",
+    "Stage 3: control. Real perspective study now — starting with one point: rooms, corridors, a single vanishing point.",
+    [yt("BYlW8XC0MlI", "Watch: perspective for beginners", "Proko's grounding in horizon lines and vanishing points."),
+     T("Draw an interior in one-point", "A floor grid, objects receding to one vanishing point.")]],
+   ["Perspective", "Two-point perspective",
+    "The workhorse of environment drawing. Two vanishing points — buildings and boxes seen from a corner.",
+    [yt("9-Y4K4hqZwo", "Watch: two-point perspective made simple", "Proko sets up a two-point scene from scratch."),
+     T("A street corner in two-point", "Two vanishing points on the horizon, verticals kept true."),
+     T("Check with extensions", "Your 250-box instincts pay off here.")]],
+   ["Perspective", "Three-point & camera height",
+    "Add the third vanishing point for dramatic up and down shots — directly relevant to comp and camera thinking.",
+    [lld("eye-level-essential-perspective-tip-for-artists/", "Watch: eye level and the horizon line", "The one perspective idea that fixes most mistakes."),
+     T("A tall building, worm's-eye view", "The third vanishing point above or below."),
+     T("Note how camera height changes the feel", "High horizon against low.")]],
+   ["Perspective", "Ellipses in perspective",
     "Circles in perspective become ellipses — wheels, cups, arches. Where your ellipse drills meet real depth.",
-    [{tag:'main',title:'Cylinders & wheels in a scene',meta:'Minor axis along the form\'s direction.'},
-     {tag:'main',title:'A simple vehicle in perspective',meta:'Box it, then carve.'}]],
-   ["Digital","Digital perspective thumbnails",
+    [dbox("250cylinders/1", "Read: the 250 Cylinder Challenge", "Drawabox's deep version of today. Optional, but it makes a great warm-up track from here on.", "The Challenge"),
+     T("Cylinders and wheels in a scene", "Minor axis along the form's direction, always."),
+     T("A simple vehicle in perspective", "Box it, then carve.")]],
+   ["Digital", "Digital perspective thumbnails",
     "Use the tablet to rough environment thumbnails fast — perspective grids are easy digitally.",
-    [ctrlpaint('Ctrl+Paint — environment sketching','Blocking space and depth.'),
-     {tag:'main',title:'3 environment thumbnails',meta:'Loose, fast, just establishing space.'}]],
-   ["Submit","Perspective checkpoint",
-    "You can now place anything believably in space from any camera angle. Huge for VFX/comp work.",
-    [{tag:'main',title:'One finished perspective scene',meta:'Interior or exterior, your choice.'},
-     {tag:'main',title:'Reflection',meta:'This is the skill that makes set extensions sit right.'}]]],
-  // Phase 10 — Anatomy building blocks (wk 28–30)
-  [["Anatomy","Anatomy — the torso",
-    "Anatomy as simple masses, not memorised muscles. The torso: ribcage, pelvis, the muscles that bridge them.",
-    [prokoFig('Watch: torso anatomy (simple masses)','Major masses of the trunk. Free.'),
-     {tag:'main',title:'Construct 3 torsos',meta:'Build on the bean; add the big forms.'}]],
-   ["Anatomy","Anatomy — arms",
+    [cp("videos/imaginary-landscape-thumbnails", "Watch: imaginary landscape thumbnails", "Ctrl+Paint on exploring space quickly, small."),
+     T("Three environment thumbnails", "Loose, fast, just establishing space.")]],
+   ["Submit", "Perspective checkpoint",
+    "You can now place anything believably in space from any camera angle. Huge for VFX and comp work.",
+    [yt("FmR_Q1mtS7I", "Watch: perspective in ten minutes", "Marco Bucci on using perspective loosely once you know the rules."),
+     T("One finished perspective scene", "Interior or exterior, your choice."),
+     T("Reflection", "This is the skill that makes set extensions sit right.")]]],
+  // Phase 10 — Anatomy building blocks (week 18)
+  [["Anatomy", "Anatomy — the torso",
+    "Anatomy as simple masses, not memorised muscles. The torso: ribcage, pelvis, and the forms that bridge them.",
+    [yt("pDgyQjNFVQk", "Watch: introduction to human anatomy for artists", "Proko on how to study anatomy without drowning in it."),
+     lld("the-most-useful-anatomy-idea-is-also-super-simple/", "Read: the ribcage", "The most useful anatomy idea, and it's simple."),
+     T("Construct three torsos", "Build on the bean; add the big forms.")]],
+   ["Anatomy", "Anatomy — arms",
     "The arm's masses and how they twist. Enough to draw a believable arm, not a textbook.",
-    [prokoFig('Watch: arm anatomy (simple masses)','Upper arm, forearm, the twist. Free.'),
-     {tag:'main',title:'Page of arms in poses',meta:'Simple forms, correct attachment.'}]],
-   ["Anatomy","Anatomy — legs",
+    [lld("how-to-draw-arms-beginner-to-pro/", "Watch: how to draw arms", "Beginner to pro, as simple forms first."),
+     T("A page of arms in poses", "Simple forms, correct attachment.")]],
+   ["Anatomy", "Anatomy — legs",
     "The leg's masses and rhythms. The biggest forms in the body.",
-    [prokoFig('Watch: leg anatomy (simple masses)','Thigh, calf, the rhythm. Free.'),
-     {tag:'main',title:'Page of legs in poses',meta:'Watch the front/back rhythm.'}]],
-   ["Anatomy","Hands & feet",
+    [yt("14yBwKaBY48", "Watch: the secret to drawing better arms and legs", "Proko on the rhythms that run down a limb."),
+     T("A page of legs in poses", "Watch the front-to-back rhythm.")]],
+   ["Anatomy", "Hands & feet",
     "The dreaded hands. Construct them as a boxy mitten mass first, fingers second.",
-    [prokoFig('Watch: hands & feet','Block the mass before the digits. Free.'),
-     {tag:'main',title:'A page of hands',meta:'From your own hand in a mirror.'}]],
-   ["Anatomy","Full figure with anatomy",
-    "Bring the anatomy together on a full posed figure built on your gesture + bean foundation.",
-    [{tag:'main',title:'2 full anatomical figures',meta:'Gesture → bean → masses. Don\'t over-render.'},
-     {tag:'main',title:'Keep the gesture alive',meta:'Anatomy serves the pose, not the reverse.'}]],
-   ["Submit","Anatomy checkpoint",
+    [lld("the-bread-slice-technique-for-drawing-hands/", "Watch: the bread-slice technique for hands", "A simple mass, sliced — then the fingers."),
+     yt("Ezfxh0lO-Pc", "Watch: how to draw feet", "Proko on the wedge and the arch."),
+     T("A page of hands", "From your own hand in a mirror.")]],
+   ["Anatomy", "Full figure with anatomy",
+    "Bring the anatomy together on a full posed figure built on your gesture-and-bean foundation.",
+    [lld("how-to-learn-anatomy-five-dos-and-donts/", "Read: how to learn anatomy — dos and don'ts", "Keep this in mind so the masses serve the pose."),
+     T("Two full anatomical figures", "Gesture, bean, masses. Don't over-render."),
+     T("Keep the gesture alive", "Anatomy serves the pose, not the reverse.")]],
+   ["Submit", "Anatomy checkpoint",
     "You can build a figure with believable underlying anatomy. Most people never get this far.",
-    [{tag:'main',title:'Best anatomical figure',meta:'Save it.'},
-     {tag:'main',title:'Reflection',meta:'Compare to your Stage 2 mannequins.'}]]],
-  // Phase 11 — Light & value mastery (wk 31–33)
-  [["Light","The logic of light",
+    [T("Best anatomical figure", "Save it."),
+     T("Reflection", "Compare to your Stage 2 mannequins.")]]],
+  // Phase 11 — Light & value (week 19)
+  [["Light", "The logic of light",
     "Phase 11: light in earnest. Why a form looks the way it does under a given light — the skill that lets you judge any plate.",
-    [{tag:'watch',title:'Watch: light & form review',meta:'Form principle, cast vs form shadow. Free tutorial.'},
-     {tag:'main',title:'Light one object 3 ways',meta:'Same object, three light directions.'}]],
-   ["Light","Edges — hard, soft, lost",
+    [lld("seeing-light-eye-training-while-out-and-about/", "Watch: seeing light and shadow in daily life", "Eye training you can do anywhere."),
+     T("Light one object three ways", "Same object, three light directions.")]],
+   ["Light", "Edges — hard, soft, lost",
     "Edge control is what separates flat from photographic. Where edges sharpen and where they dissolve.",
-    [{tag:'main',title:'A study focused only on edges',meta:'Find the hardest and softest edge in a photo.'},
-     {tag:'main',title:'Lose an edge into shadow',meta:'Merge a shadow shape into the background.'}]],
-   ["Light","Value grouping",
-    "Squint and reduce a subject to 3–4 value groups. The foundation of readable images.",
-    [ctrlpaint('Ctrl+Paint — value grouping','Simplify to big value shapes.'),
-     {tag:'main',title:'3-value reduction of a photo',meta:'No more than 3 greys + white.'}]],
-   ["Light","Materials — how surfaces read",
+    [yt("Nap7dwHjD9Y", "Watch: merging shapes in ten minutes", "Marco Bucci on losing edges so shapes read as one."),
+     T("A study focused only on edges", "Find the hardest and the softest edge in a photo."),
+     T("Lose an edge into shadow", "Merge a shadow shape into the background.")]],
+   ["Light", "Value grouping",
+    "Squint and reduce a subject to three or four value groups. The foundation of readable images.",
+    [yt("BTYGWfiZnMA", "Watch: essential values for painting and lighting", "Marco Bucci on organising values into groups."),
+     cp("videos/simplifying-photo-studies-pt2", "Watch: simplifying photo studies, part two", "The same idea, done on the tablet."),
+     T("A three-value reduction of a photo", "No more than three greys plus white.")]],
+   ["Light", "Materials — how surfaces read",
     "Why metal, skin and cloth look different under the same light. Reflectivity and edge behaviour.",
-    [{tag:'main',title:'Study 3 materials',meta:'A matte, a shiny, and a soft surface.'},
-     {tag:'main',title:'Note the highlight behaviour',meta:'Tight & bright vs broad & dull.'}]],
-   ["Digital","Digital value painting",
-    "A full greyscale digital study, applying everything about light. Core skill for digital/VFX work.",
-    [ctrlpaint('Ctrl+Paint — greyscale painting','Building a value painting start to finish.'),
-     {tag:'main',title:'One greyscale study from a photo',meta:'Big shapes → refine → edges last.'}]],
-   ["Submit","Light checkpoint",
-    "You can read and reproduce how light describes form and material. This is the comp-artist's eye.",
-    [{tag:'main',title:'Best value study',meta:'Save it.'},
-     {tag:'main',title:'Reflection',meta:'You now see light the way a compositor needs to.'}]]],
-  // Phase 12 — Integration (wk 34–36)
-  [["Project","Master study — drawing",
+    [cp("videos/studying-texture-with-material-spheres", "Watch: material spheres", "Ctrl+Paint renders the same sphere as different materials."),
+     cp("videos/studying-glossiness", "Watch: studying glossiness", "Tight, bright highlights against broad, dull ones."),
+     T("Study three materials", "A matte, a shiny and a soft surface.")]],
+   ["Digital", "Digital value painting",
+    "A full greyscale digital study, applying everything about light. Core skill for digital and VFX work.",
+    [yt("3j6t9Qj0aQo", "Watch: why practise digital painting in greyscale", "Ctrl+Paint on why values come before colour."),
+     cp("lets-paint", "Watch: a workflow demo", "Pick any of the free 'Let's Paint' demos and watch it through."),
+     T("One greyscale study from a photo", "Big shapes, then refine, edges last.")]],
+   ["Submit", "Light checkpoint",
+    "You can read and reproduce how light describes form and material. This is the comp artist's eye.",
+    [T("Best value study", "Save it."),
+     T("Reflection", "You now see light the way a compositor needs to.")]]],
+  // Phase 12 — Integration (week 20)
+  [["Project", "Master study — drawing",
     "Copy a drawing by an artist you admire, to absorb their decisions. Learning by reverse-engineering.",
-    [{tag:'main',title:'Begin a master study',meta:'Pick a strong drawing; analyse before copying.'},
-     {tag:'main',title:'Ask why, not just what',meta:'Why that edge, that value, that simplification?'}]],
-   ["Project","Master study — finish & analyse",
+    [cp("videos/a-better-way-to-use-reference-images", "Watch: a better way to use reference", "How to study a reference instead of copying it blind."),
+     T("Begin a master study", "Pick a strong drawing; analyse it before copying."),
+     T("Ask why, not just what", "Why that edge, that value, that simplification?")]],
+   ["Project", "Master study — finish & analyse",
     "Complete the study and write down two things you learned to steal for your own work.",
-    [{tag:'main',title:'Finish the study',meta:'Match the big relationships, not every mark.'},
-     {tag:'main',title:'Note 2 takeaways',meta:'Concrete things to apply next time.'}]],
-   ["Figure","Long-pose figure",
+    [T("Finish the study", "Match the big relationships, not every mark."),
+     T("Note two takeaways", "Concrete things to apply next time.")]],
+   ["Figure", "Long-pose figure",
     "A longer, more finished figure drawing — gesture, structure, anatomy and light in one piece.",
-    [{tag:'main',title:'One 20-min figure',meta:'The full pipeline, taken further than usual.'},
-     {tag:'main',title:'Shade with intent',meta:'One clear light source.'}]],
-   ["Digital","Digital illustration start",
+    [lld("beginner-gesture-drawing-3-keeping-longer-poses-dynamic/", "Watch: keeping longer poses dynamic", "How to spend twenty minutes on a figure without killing it."),
+     T("One twenty-minute figure", `The full pipeline, taken further than usual. ${POSES}.`),
+     T("Shade with intent", "One clear light source.")]],
+   ["Digital", "Digital illustration start",
     "Begin a small finished digital piece — your skills, on the tablet, toward a real image.",
-    [ctrlpaint('Ctrl+Paint — workflow review','Sketch → values → refine.'),
-     {tag:'main',title:'Block a digital illustration',meta:'Idea, thumbnail, value block.'}]],
-   ["Project","Digital illustration finish",
+    [cp("videos/thumbnail-iteration", "Watch: thumbnail iteration", "Refining one promising thumbnail rather than drawing until something hits."),
+     T("Block a digital illustration", "Idea, thumbnail, value block.")]],
+   ["Project", "Digital illustration finish",
     "Bring the digital piece to a finished state. Edges, focal point, final values.",
-    [{tag:'main',title:'Finish the digital piece',meta:'Strengthen the focal point; lose unimportant edges.'},
-     {tag:'main',title:'Step back & assess',meta:'Squint — does it read?'}]],
-   ["Graduation","Stage 3 complete",
-    "Nine months in. Perspective, anatomy, light, digital — you have genuine range and control now.",
-    [{tag:'main',title:'Assemble a mini-portfolio',meta:'Your 5 best pieces so far.'},
-     {tag:'main',title:'Onward to Stage 4',meta:'Final stage: composition, imagination, and personal voice.'}]]],
+    [T("Finish the digital piece", "Strengthen the focal point; lose the unimportant edges."),
+     T("Step back and assess", "Squint — does it read?")]],
+   ["Graduation", "Stage 3 complete",
+    "Five months in. Perspective, anatomy, light, digital — you have genuine range and control now.",
+    [T("Assemble a mini-portfolio", "Your five best pieces so far."),
+     T("Onward to Stage 4", "Final stage: composition, imagination, and a project of your own.")]]],
 ];
-mkStage(stage3);
+mkStage(stage3, "Standing warm-up: gestures, boxes, ellipses.");
 
 // ============================================================
-//  STAGE 4 — Weeks 37–48 : BRINGING IT TOGETHER
-//  Composition, drawing from imagination, light logic for
-//  comp work, and sustained personal projects.
+//  STAGE 4 — Weeks 21–24 : BRINGING IT TOGETHER
+//  Composition, drawing from imagination, a sustained project.
 // ============================================================
 const stage4 = [
-  // Phase 13 — Composition (wk 37–39)
-  [["Composition","Principles of composition",
+  // Phase 13 — Composition (week 21)
+  [["Composition", "Principles of composition",
     "Stage 4: making images, not just studies. How to arrange a frame so the eye goes where you want.",
-    [{tag:'main',title:'5 thumbnail compositions',meta:'Same subject, 5 different arrangements.'},
-     {tag:'main',title:'Pick the strongest & say why',meta:'Focal point, balance, eye-path.'}]],
-   ["Composition","Notan & big shapes",
-    "Black-and-white shape design. A composition works or fails at the level of big shapes.",
-    [{tag:'main',title:'3 two-value notan studies',meta:'Pure black & white shape design.'},
-     {tag:'main',title:'Test readability small',meta:'Shrink it — does it still read?'}]],
-   ["Composition","Focal point & eye-path",
+    [cp("videos/category/Composition", "Watch: Ctrl+Paint on composition", "The free composition lessons — start with the principles of design."),
+     T("Five thumbnail compositions", "Same subject, five different arrangements."),
+     T("Pick the strongest and say why", "Focal point, balance, eye-path.")]],
+   ["Composition", "Notan & big shapes",
+    "Black-and-white shape design. A composition works or fails at the level of its big shapes.",
+    [yt("ACJqXFyFVQw", "Watch: simplifying values with notan studies", "Proko on two-value design."),
+     T("Three two-value notan studies", "Pure black and white shape design."),
+     T("Test readability small", "Shrink it — does it still read?")]],
+   ["Composition", "Focal point & eye-path",
     "Directing attention with contrast, edges and lines of sight.",
-    [{tag:'main',title:'Design a clear focal point',meta:'Highest contrast & sharpest edge at the focus.'},
-     {tag:'main',title:'Map the eye-path',meta:'Trace where the eye travels.'}]],
-   ["Composition","Perspective + composition",
+    [yt("9fknSkyN6_0", "Watch: visual language in ten minutes", "Marco Bucci on what a picture is telling the eye to do."),
+     T("Design a clear focal point", "Highest contrast and sharpest edge at the focus."),
+     T("Map the eye-path", "Trace where the eye travels.")]],
+   ["Composition", "Perspective + composition",
     "Combine your perspective control with composition for a designed environment.",
-    [{tag:'main',title:'Composed environment thumbnail',meta:'Real perspective, deliberate framing.'},
-     {tag:'main',title:'Choose camera for impact',meta:'Height & angle as storytelling.'}]],
-   ["Digital","Digital composition studies",
+    [T("A composed environment thumbnail", "Real perspective, deliberate framing."),
+     T("Choose the camera for impact", "Height and angle as storytelling.")]],
+   ["Digital", "Digital composition studies",
     "Fast digital comps — the tablet's speed makes iterating compositions painless.",
-    [ctrlpaint('Ctrl+Paint — thumbnailing','Quick value comps.'),
-     {tag:'main',title:'6 digital thumbnails',meta:'Two minutes each. Quantity breeds options.'}]],
-   ["Submit","Composition checkpoint",
+    [cp("videos/modular-thumbnail-sketching", "Watch: modular thumbnail sketching", "Building thumbnails from reusable parts."),
+     T("Six digital thumbnails", "Two minutes each. Quantity breeds options.")]],
+   ["Submit", "Composition checkpoint",
     "You can design a frame deliberately rather than hope it works. The director's eye.",
-    [{tag:'main',title:'Best composed thumbnail → develop it',meta:'Take one further.'},
-     {tag:'main',title:'Reflection',meta:'This is what separates a study from a picture.'}]]],
-  // Phase 14 — From imagination (wk 40–42)
-  [["Imagination","Drawing from imagination — objects",
+    [T("Best composed thumbnail — develop it", "Take one further."),
+     T("Reflection", "This is what separates a study from a picture.")]]],
+  // Phase 14 — From imagination (week 22)
+  [["Imagination", "Drawing from imagination — objects",
     "Phase 14: no reference. Build objects from your understanding of form. The real test of everything so far.",
-    [{tag:'main',title:'5 objects from imagination',meta:'Construct from primitives, no reference.'},
-     {tag:'main',title:'Use reference to check, after',meta:'Draw first, verify second.'}]],
-   ["Imagination","Figures from imagination",
+    [yt("-Ww0BXehQ5E", "Watch: learning to sketch from imagination", "Proko on how the skill is built, and why construction is the key."),
+     T("Five objects from imagination", "Construct from primitives, no reference."),
+     T("Use reference to check, after", "Draw first, verify second.")]],
+   ["Imagination", "Figures from imagination",
     "Posed figures with no reference — gesture, bean and anatomy doing their job from memory.",
-    [{tag:'main',title:'3 figures from imagination',meta:'Lean on the pipeline you\'ve drilled.'},
-     {tag:'main',title:'Note where it breaks down',meta:'That\'s your next study target.'}]],
-   ["Imagination","Environments from imagination",
+    [lld("memory-drawing-exercise/", "Watch: the memory drawing exercise", "Look, close the book, draw. The exercise that builds drawing from your head."),
+     T("Three figures from imagination", "Lean on the pipeline you've drilled."),
+     T("Note where it breaks down", "That's your next study target.")]],
+   ["Imagination", "Environments from imagination",
     "Invent a believable space using perspective and composition from your head.",
-    [{tag:'main',title:'One invented environment',meta:'Establish a horizon & VPs, then build.'},
-     {tag:'main',title:'Keep light consistent',meta:'One light source, obeyed everywhere.'}]],
-   ["Imagination","Targeted study to fill a gap",
+    [yt("usvintIWaFs", "Watch: how to invent scenes from imagination", "Proko with Rembert Montald on building a scene from nothing."),
+     T("One invented environment", "Establish a horizon and vanishing points, then build."),
+     T("Keep the light consistent", "One light source, obeyed everywhere.")]],
+   ["Imagination", "Targeted study to fill a gap",
     "Pick the thing that broke down in imagination this week and do focused reference study on it.",
-    [{tag:'main',title:'Study your weakest area',meta:'Hands, a vehicle type, a material — whatever failed.'},
-     {tag:'main',title:'Then redraw it from memory',meta:'Close the loop.'}]],
-   ["Digital","Digital concept sketch",
+    [T("Study your weakest area", "Hands, a vehicle type, a material — whatever failed."),
+     T("Then redraw it from memory", "Close the loop.")]],
+   ["Digital", "Digital concept sketch",
     "An imagination-based concept piece, digitally — the bread and butter of production art.",
-    [{tag:'main',title:'Block a concept from imagination',meta:'Thumbnail → value → refine.'},
-     {tag:'main',title:'Design as you go',meta:'Let happy accidents inform it.'}]],
-   ["Submit","Imagination checkpoint",
+    [yt("6-8ED4DW6A0", "Watch: training yourself to draw from imagination", "Peter Han on Proko: the daily practice that makes it possible."),
+     T("Block a concept from imagination", "Thumbnail, value, refine."),
+     T("Design as you go", "Let happy accidents inform it.")]],
+   ["Submit", "Imagination checkpoint",
     "You can generate believable images from your head. This is the goal most people never reach.",
-    [{tag:'main',title:'Best imaginative piece',meta:'Save it.'},
-     {tag:'main',title:'Reflection',meta:'Reference is now a tool you choose, not a crutch you need.'}]]],
-  // Phase 15 — Personal projects (wk 43–45)
-  [["Project","Define a personal project",
+    [T("Best imaginative piece", "Save it."),
+     T("Reflection", "Reference is now a tool you choose, not a crutch you need.")]]],
+  // Phase 15 — A personal project (week 23)
+  [["Project", "Define a personal project",
     "Phase 15: a sustained piece that matters to you. Scope it, gather reference, plan the stages.",
-    [{tag:'main',title:'Choose & scope your project',meta:'Ambitious but finishable in ~2 weeks of sessions.'},
-     {tag:'main',title:'Moodboard & thumbnails',meta:'Gather reference; 5 composition thumbnails.'}]],
-   ["Project","Project — construction pass",
+    [T("Choose and scope your project", "Ambitious but finishable in this week's sessions."),
+     T("Moodboard and thumbnails", "Gather reference; five composition thumbnails.")]],
+   ["Project", "Project — construction pass",
     "Build the underdrawing properly: perspective, construction, gesture — all your fundamentals.",
-    [{tag:'main',title:'Full construction underdrawing',meta:'Get the bones right before any rendering.'},
-     {tag:'main',title:'Check it cold tomorrow',meta:'Fresh eyes catch errors.'}]],
-   ["Project","Project — value pass",
-    "Block the big value design. Composition reads in greyscale before any detail.",
-    [{tag:'main',title:'Block major values',meta:'3–4 value groups, focal point planned.'},
-     {tag:'main',title:'Squint test',meta:'Does the focal point win?'}]],
-   ["Project","Project — refinement",
+    [T("Full construction underdrawing", "Get the bones right before any rendering."),
+     T("Check it cold tomorrow", "Fresh eyes catch errors.")]],
+   ["Project", "Project — value pass",
+    "Block the big value design. A composition reads in greyscale before any detail.",
+    [T("Block the major values", "Three or four value groups, focal point planned."),
+     T("Squint test", "Does the focal point win?")]],
+   ["Project", "Project — refinement",
     "Refine forms and edges. Push detail only where it serves the focal point.",
-    [{tag:'main',title:'Refine the focal area',meta:'Sharpest edges & detail at the focus.'},
-     {tag:'main',title:'Lose edges elsewhere',meta:'Let secondary areas stay quiet.'}]],
-   ["Project","Project — finish",
+    [T("Refine the focal area", "Sharpest edges and most detail at the focus."),
+     T("Lose edges elsewhere", "Let secondary areas stay quiet.")]],
+   ["Project", "Project — finish",
     "Final pass. Step back, fix what nags, and call it done.",
-    [{tag:'main',title:'Finishing pass',meta:'Highlights, accents, final checks.'},
-     {tag:'main',title:'Declare it finished',meta:'Done is better than fiddled-to-death.'}]],
-   ["Submit","Project checkpoint",
+    [T("Finishing pass", "Highlights, accents, final checks."),
+     T("Declare it finished", "Done is better than fiddled to death.")]],
+   ["Submit", "Project checkpoint",
     "You took a piece from blank page to finished through a real production pipeline. That's professional practice.",
-    [{tag:'main',title:'Present your finished piece',meta:'Add it to your portfolio.'},
-     {tag:'main',title:'Reflection',meta:'Note what you\'d do differently next time.'}]]],
-  // Phase 16 — Mastery & momentum (wk 46–48)
-  [["Voice","Finding your direction",
-    "Phase 16: the last stretch. What do YOU want to draw? Explore subjects and styles that pull you.",
-    [{tag:'main',title:'Explore 3 directions',meta:'Quick pieces in 3 different subjects/styles.'},
-     {tag:'main',title:'Notice what energises you',meta:'Follow the fun — it\'s information.'}]],
-   ["Voice","Studying artists you admire",
-    "Analyse 2–3 artists whose work you love. What specific choices make it theirs?",
-    [{tag:'main',title:'Break down 2 artists\' work',meta:'Shapes, edges, palette, subject.'},
-     {tag:'main',title:'List what to borrow',meta:'Influence, not imitation.'}]],
-   ["Project","Second personal project — start",
+    [T("Present your finished piece", "Add it to your portfolio."),
+     T("Reflection", "Note what you'd do differently next time.")]]],
+  // Phase 16 — Momentum (week 24)
+  [["Voice", "Finding your direction",
+    "Phase 16: the last stretch. What do you want to draw? Explore subjects and styles that pull you.",
+    [T("Explore three directions", "Quick pieces in three different subjects or styles."),
+     T("Notice what energises you", "Follow the fun — it's information.")]],
+   ["Voice", "Studying artists you admire",
+    "Analyse two or three artists whose work you love. What specific choices make it theirs?",
+    [T("Break down two artists' work", "Shapes, edges, palette, subject."),
+     T("List what to borrow", "Influence, not imitation.")]],
+   ["Project", "Second project — start",
     "Apply everything, faster and more confidently than the first. Scope and block it.",
-    [{tag:'main',title:'Scope & thumbnail project 2',meta:'Aim higher than project 1.'},
-     {tag:'main',title:'Construction + value block',meta:'You know the pipeline now.'}]],
-   ["Project","Second project — develop",
+    [T("Scope and thumbnail project two", "Aim higher than project one."),
+     T("Construction and value block", "You know the pipeline now.")]],
+   ["Project", "Second project — develop",
     "Drive it forward. Trust your process.",
-    [{tag:'main',title:'Refinement pass',meta:'Focal point, edges, detail hierarchy.'},
-     {tag:'main',title:'Compare your pace to project 1',meta:'Faster? More assured? That\'s growth.'}]],
-   ["Project","Second project — finish",
+    [T("Refinement pass", "Focal point, edges, detail hierarchy."),
+     T("Compare your pace to project one", "Faster? More assured? That's growth.")]],
+   ["Project", "Second project — finish",
     "Complete it. Two finished pieces is the start of a body of work.",
-    [{tag:'main',title:'Finish project 2',meta:'Final pass, then stop.'},
-     {tag:'main',title:'Add to portfolio',meta:'Now you have a collection.'}]],
-   ["Graduation","Course complete — one year of drawing",
-    "Forty-eight weeks. You went from your first wobbly line to finished imaginative pieces through a real pipeline. You are, by any honest measure, a capable drawer — and the eye you've built is exactly what makes a strong Flame artist. Keep the warm-ups, keep making work, and revisit any phase as a refresher whenever you like. The gym stays open.",
-    [{tag:'main',title:'Lay out Week 1 vs Week 48',meta:'Your very first page beside your last. This is the proof.'},
-     {tag:'main',title:'Set your next 12-week goal',meta:'Repeat a stage, go deep on one subject, or start drawing daily for its own sake.'},
-     {tag:'main',title:'Thank-you to past-you',meta:'For showing up 15 minutes a day. That\'s how this was always going to work.'}]]],
+    [T("Finish project two", "Final pass, then stop."),
+     T("Add to portfolio", "Now you have a collection.")]],
+   ["Graduation", "Course complete — twenty-four weeks of drawing",
+    "Twenty-four weeks. You went from your first wobbly line to finished imaginative pieces through a real pipeline. You are, by any honest measure, a capable drawer — and the eye you've built is exactly what makes a strong Flame artist. Keep the warm-ups, keep making work, and revisit any phase as a refresher whenever you like.",
+    [T("Lay out week 1 against week 24", "Your very first page beside your last. This is the proof."),
+     T("Set your next goal", "Repeat a stage, finish the Drawabox lessons properly, go deep on one subject, or just keep drawing daily for its own sake."),
+     T("Thank past-you", "For showing up for twenty minutes a day. That's how this was always going to work.")]]],
 ];
-mkStage(stage4);
+mkStage(stage4, "Standing warm-up: gestures, boxes, ellipses.");
+
+if (CURRICULUM.length !== 143) console.error("curriculum: expected 143 sessions, got " + CURRICULUM.length);
 
 // ============================================================
 //  STATE  (persisted)
@@ -1063,7 +1213,7 @@ const TOTAL = CURRICULUM.length;
 const KEY = 'drawingGym.v1';
 
 function defaultState(){
-  return { idx:0, completedCount:0, streak:0, lastCompleteDate:null, checks:{}, doneSessions:{}, updatedAt:0 };
+  return { idx:0, completedCount:0, streak:0, lastCompleteDate:null, checks:{}, doneSessions:{}, days:{}, updatedAt:0 };
 }
 let state = defaultState();
 
@@ -1215,6 +1365,7 @@ function mergeStates(a, b){
   out.doneSessions = Object.assign({}, older.doneSessions, newer.doneSessions);
   // union per-session checks
   out.checks = Object.assign({}, older.checks, newer.checks);
+  out.days = Object.assign({}, older.days, newer.days);
   out.completedCount = Object.keys(out.doneSessions).length;
   // streak & position follow the newer save
   out.idx = newer.idx;
@@ -1245,11 +1396,15 @@ function setSyncStatus(s, detail){
 //  DATE HELPERS for streak
 // ============================================================
 function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
-function isYesterday(prev){
-  if(!prev) return false;
-  const d=new Date(); d.setDate(d.getDate()-1);
-  return prev === d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+// Dates are local "YYYY-M-D", unpadded — the format saved progress already uses.
+function daysAgo(str){
+  if(!str) return Infinity;
+  const [y,m,d] = str.split('-').map(Number);
+  const then = new Date(y, m-1, d), now = new Date(); now.setHours(0,0,0,0);
+  return Math.round((now - then) / 86400000);
 }
+// The course is six days a week, so one day off keeps the streak; two in a row ends it.
+function streakAlive(prev){ return daysAgo(prev) <= 2; }
 
 // ============================================================
 //  PHASE LOOKUP
@@ -1288,14 +1443,15 @@ function render(){
   const phaseDef = PHASES[ph.n-1];
 
   // stats
-  document.getElementById('streak').textContent = state.streak;
+  // A streak that has lapsed shows as 0 straight away, not at the next session.
+  document.getElementById('streak').textContent = streakAlive(state.lastCompleteDate) ? state.streak : 0;
   document.getElementById('completed').textContent = state.completedCount;
   document.getElementById('progress').textContent = Math.round((state.completedCount/TOTAL)*100)+'%';
 
   const stageNo = stageForPhase(ph.n);
   const stageDef = STAGES[stageNo-1];
   document.getElementById('phaseLabel').innerHTML = `Stage ${stageNo} &middot; ${stageDef.name} &middot; Phase ${phaseDef.no}: ${phaseDef.name}`;
-  document.getElementById('weekLabel').textContent = `Week ${ph.wk} of 48 · Session ${i+1}/${TOTAL}`;
+  document.getElementById('weekLabel').textContent = `Week ${ph.wk} of 24 · Session ${i+1}/${TOTAL}`;
 
   const checks = state.checks[i] || [];
   const tasksHTML = s.tasks.map((t,ti)=>{
@@ -1333,7 +1489,8 @@ function render(){
       state.checks[i] = arr;
       saveState(state); render();
     };
-    el.addEventListener('click', toggle);
+    // A tap on a lesson link opens the lesson — it must not tick the task too.
+    el.addEventListener('click', e=>{ if (e.target.closest('a')) return; toggle(); });
     el.addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggle(); } });
   });
 
@@ -1381,8 +1538,9 @@ function completeSession(){
     state.completedCount = Object.keys(state.doneSessions).length;
     // streak logic — one increment per calendar day
     const today = todayStr();
+    (state.days ||= {})[today] = true;
     if (state.lastCompleteDate !== today){
-      if (isYesterday(state.lastCompleteDate) || state.lastCompleteDate===null){
+      if (streakAlive(state.lastCompleteDate) || state.lastCompleteDate===null){
         state.streak += 1;
       } else if (state.lastCompleteDate !== today){
         state.streak = 1;
@@ -1407,8 +1565,9 @@ function completeSessionSilent(){
     state.doneSessions[i]=true;
     state.completedCount = Object.keys(state.doneSessions).length;
     const today=todayStr();
+    (state.days ||= {})[today] = true;
     if(state.lastCompleteDate!==today){
-      if(isYesterday(state.lastCompleteDate)||state.lastCompleteDate===null) state.streak+=1;
+      if(streakAlive(state.lastCompleteDate)||state.lastCompleteDate===null) state.streak+=1;
       else state.streak=1;
       state.lastCompleteDate=today;
     }
